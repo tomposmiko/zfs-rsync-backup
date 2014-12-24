@@ -3,6 +3,7 @@ pool="tank"
 backup_dataset="$pool/backup"
 date=$(date "+Y-%m-%d--%H-%M")
 backup_exclude_default="/$pool/etc/zrb/exclude"
+prefix=zrb
 
 # logging
 #f_log(){
@@ -31,7 +32,6 @@ f_usage(){
 	echo
 }
 
-
 # Exit if no arguments!
 let $# || { f_usage; exit 1; }
 
@@ -40,7 +40,7 @@ while [ "$#" -gt "0" ]; do
 	-p|--prefix)
 		PARAM=$2
 		f_check_switch_param $PARAM
-		prefix={$PARAM:zrb}
+		prefix=$PARAM
 		shift 2
 	;;
 
@@ -61,7 +61,7 @@ while [ "$#" -gt "0" ]; do
 	-e|--exclude-file)
 		PARAM=$2
 		f_check_switch_param $PARAM
-		backup_exclude_param=${PARAM:-$backup_exclude_default}
+		backup_exclude_param=$PARAM
 
 
 	-h|--help|*)
@@ -112,8 +112,7 @@ if [ -f $backup_vault_conf/exclude ];
 		fi
 		backup_exclude_file=$backup_vault_conf/exclude
 	else
-		backup_exclude_file=$backup_exclude_param
-	
+		backup_exclude_file=${backup_exclude_param:-$backup_exclude_default}
 fi
 
 
