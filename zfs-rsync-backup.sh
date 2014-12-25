@@ -1,7 +1,7 @@
 #!/bin/bash -e
 pool="tank"
 backup_dataset="$pool/backup"
-date=$(date "+Y-%m-%d--%H-%M")
+date=$(date "+%Y-%m-%d--%H-%M")
 backup_exclude_default="/$pool/etc/zrb/exclude"
 prefix=zrb
 
@@ -62,7 +62,7 @@ while [ "$#" -gt "0" ]; do
 		PARAM=$2
 		f_check_switch_param $PARAM
 		backup_exclude_param=$PARAM
-
+	;;
 
 	-h|--help|*)
 		f_usage
@@ -71,19 +71,37 @@ while [ "$#" -gt "0" ]; do
   esac
 done
 
-rsync_args="-vrltH --delete -pgo --stats -D --numeric-ids"
-rsync="rsync $rsync_args"
+backup_vault_dest="/$backup_dataset/$vault/data"
+backup_vault_conf="/$backup_dataset/$vault/config"
+backup_vault_log="/$backup_dataset/$vault/log"
 
-backup_vault_dest="$backup_dataset/$vault/data"
-backup_vault_conf="$backup_dataset/$vault/config"
+# check for vault zfs dataset
+if ! zfs list $backup_dataset/$vault > /dev/null 2>&1;then
+		echo "Non-existent dataset for vault: $backup_dataset/$vault !"
+		exit 1
+fi
 
+# check for vault directory
+if [ ! -d /$backup_dataset/$vault ]; then
+		echo "Non-existent vault: /$backup_dataset/$vault !"
+		exit 1
+fi
+
+# check for vault/config directory
 if [ ! -d $backup_vault_conf ]; then
 		echo "Non-existent config directory: $backup_vault_conf !"
 		exit 1
 fi
 
+# check for vault/data directory
 if [ ! -d $backup_vault_dest ]; then
 		echo "Non-existent rsync destination directory: $backup_vault_dest !"
+		exit 1
+fi
+
+# check for vault/log directory
+if [ ! -d $backup_vault_log ]; then
+		echo "Non-existent rsync destination directory: $backup_vault_log !"
 		exit 1
 fi
 
@@ -93,7 +111,8 @@ fi
 #
 if [ -f $backup_vault_conf/source ];
 	then
-		backup_source=$(cut -d'=' -f2 $backup_vault_conf/source)
+		#backup_source=$(cut -d'=' -f2 $backup_vault_conf/source)
+		backup_source=$(cat $backup_vault_conf/source)
 	else
 		echo "Non-existent source file: $backup_vault_conf/source !"
 		exit 1
@@ -116,8 +135,14 @@ if [ -f $backup_vault_conf/exclude ];
 fi
 
 
+if ! echo "$freq_list"|egrep -wq '(hourly|daily|weekly|monthly)';then
+	echo "No frequency defined (hourly|daily|weekly|monthly)!"
+	exit 1
+fi
 
-$rsync --exclude-from=$backup_exclude_file $backup_source/ $backup_vault_dest/
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --exclude-from=$backup_exclude_file"
+
+rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 err=$?
 if [ $err = 24 ];
 	then
