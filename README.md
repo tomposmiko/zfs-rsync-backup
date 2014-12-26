@@ -7,5 +7,7 @@ It is @NOT@ in usable state yet.
 
 changelog
 ---------
+##### v0.2
+- add support to creating vault
 ##### v0.1
 -  start testing in semi-production
