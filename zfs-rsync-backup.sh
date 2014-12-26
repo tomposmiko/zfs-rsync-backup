@@ -25,10 +25,13 @@ f_check_switch_param(){
 f_usage(){
 	echo "Usage:"
 	echo "	zrb -p PREFIX -v VAULT -f FREQUENCY"
+	echo "	zrb -a SOURCE -v VAULT"
 	echo
 	echo "	   -p|--prefix <prefix>      default: zrb"
 	echo "	   -v|--vault <vault>        "
 	echo "	   -f|--freq <freq type>     hourly,daily,weekly,monthly (comma separated list)"
+	echo "	   -e|--exclude-file <file>  path to common exclude file"
+	echo "	   -a|--add <source>         create vault and add source"
 	echo
 }
 
@@ -62,6 +65,14 @@ while [ "$#" -gt "0" ]; do
 		PARAM=$2
 		f_check_switch_param $PARAM
 		backup_exclude_param=$PARAM
+		shift 2
+	;;
+
+	-a|--add-vault)
+		PARAM=$2
+		f_check_switch_param $PARAM
+		data_source=$PARAM
+		shift 2
 	;;
 
 	-h|--help|*)
@@ -75,6 +86,42 @@ backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
 
+
+if [ ! -z $data_source ];
+	then
+		# check for vault directory
+		if [ -d /$backup_dataset/$vault ]; then
+			echo "Cannot add vault!"
+        	echo "Existent vault directory: /$backup_dataset/$vault !"
+	        exit 1
+		fi
+
+		# check for vault zfs dataset
+		if zfs list $backup_dataset/$vault > /dev/null 2>&1; then
+			echo "Cannot add vault!"
+        	echo "Existent dataset for vault: $backup_dataset/$vault !"
+        	exit 1
+		fi
+		if zfs create $backup_dataset/$vault;
+			then
+				mkdir $backup_vault_conf
+				mkdir $backup_vault_dest
+				mkdir $backup_vault_log
+				echo $data_source > $backup_vault_conf/source
+
+			else
+				echo "Cannot create dataset:"
+				echo "$ zfs create $backup_dataset/$vault"
+				exit 1
+		fi
+		echo
+		zfs list $backup_dataset/$vault
+		echo
+		echo "Data source: $data_source"
+		echo
+		exit 0
+fi
+
 # check for vault zfs dataset
 if ! zfs list $backup_dataset/$vault > /dev/null 2>&1;then
 		echo "Non-existent dataset for vault: $backup_dataset/$vault !"
@@ -83,7 +130,7 @@ fi
 
 # check for vault directory
 if [ ! -d /$backup_dataset/$vault ]; then
-		echo "Non-existent vault: /$backup_dataset/$vault !"
+		echo "Non-existent vault directory: /$backup_dataset/$vault !"
 		exit 1
 fi
 
