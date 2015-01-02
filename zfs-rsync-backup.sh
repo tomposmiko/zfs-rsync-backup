@@ -24,14 +24,16 @@ f_check_switch_param(){
 
 f_usage(){
 	echo "Usage:"
-	echo "	zrb -p PREFIX -v VAULT -f FREQUENCY"
-	echo "	zrb -a SOURCE -v VAULT"
+	echo "	$0 -p PREFIX -v VAULT -f FREQUENCY"
+	echo "	$0 -a SOURCE -v VAULT"
+	echo "	$0 -l VAULT"
 	echo
 	echo "	   -p|--prefix <prefix>      default: zrb"
 	echo "	   -v|--vault <vault>        "
 	echo "	   -f|--freq <freq type>     hourly,daily,weekly,monthly (comma separated list)"
 	echo "	   -e|--exclude-file <file>  path to common exclude file"
 	echo "	   -a|--add <source>         create vault and add source"
+	echo "	   -l|--list <vault>         display vault"
 	echo
 }
 
@@ -72,6 +74,13 @@ while [ "$#" -gt "0" ]; do
 		PARAM=$2
 		f_check_switch_param $PARAM
 		data_source=$PARAM
+		shift 2
+	;;
+
+	-l|--list)
+		PARAM=$2
+		f_check_switch_param $PARAM
+		vault_to_list=$PARAM
 		shift 2
 	;;
 
@@ -119,6 +128,12 @@ if [ ! -z $data_source ];
 		echo
 		echo "Data source: $data_source"
 		echo
+		exit 0
+fi
+
+if [ ! -z $vault_to_list ];
+	then
+		zfs list -t all -r $backup_dataset/$vault_to_list
 		exit 0
 fi
 

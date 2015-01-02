@@ -3,5 +3,3 @@
 - reporting
 - script vs. console run
 - expiring
-- parallelization
-- vault listing/displaying
