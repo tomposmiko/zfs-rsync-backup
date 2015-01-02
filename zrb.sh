@@ -210,7 +210,9 @@ if ! echo "$freq_list"|egrep -wq '(hourly|daily|weekly|monthly)';then
 	exit 1
 fi
 
-rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --exclude-from=$backup_exclude_default $rsync_exclude_param"
+# rsync parameters
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_default $rsync_exclude_param"
+
 
 rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 err=$?
