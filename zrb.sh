@@ -133,7 +133,12 @@ fi
 
 if [ ! -z $vault_to_list ];
 	then
-		zfs list -t all -r $backup_dataset/$vault_to_list
+		if echo $vault_to_list | grep -q ^$backup_dataset;
+			then
+				zfs list -t all -r $vault_to_list
+			else
+				zfs list -t all -r $backup_dataset/$vault_to_list
+		fi
 		exit 0
 fi
 
