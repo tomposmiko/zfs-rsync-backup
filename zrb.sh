@@ -96,7 +96,7 @@ backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
 
 
-if [ ! -z $data_source ];
+if [ -n $data_source ];
 	then
 		# check for vault directory
 		if [ -d /$backup_dataset/$vault ]; then
@@ -131,7 +131,7 @@ if [ ! -z $data_source ];
 		exit 0
 fi
 
-if [ ! -z $vault_to_list ];
+if [ -n $vault_to_list ];
 	then
 		if echo $vault_to_list | grep -q ^$backup_dataset;
 			then
@@ -189,9 +189,9 @@ fi
 #
 if [ -f $backup_vault_conf/exclude ];
 	then
-		if [ ! -z $backup_exclude_param ];
+		if [ -n $backup_exclude_param ];
 			then
-				echo "The --exclude-file swich and the exclude file in vault present at the same time!"
+				echo "Both --exclude-file switch and vault specific exclude file present at the same time!"
 				echo "switch: $backup_exclude_param"
 				echo "file: $backup_vault_conf/exclude"
 				exit 1
