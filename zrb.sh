@@ -216,6 +216,3 @@ fi
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}-${freq_type}-${date}
 done
-
-
-
