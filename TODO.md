@@ -1,5 +1,5 @@
 - locking (per vault)
-- handling faulty finishes
+- handling filed jobs
 - reporting
 - script vs. console run
 - expiring
