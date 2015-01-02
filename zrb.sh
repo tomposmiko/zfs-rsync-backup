@@ -187,6 +187,11 @@ fi
 
 # exclude file for rsync
 #
+if [ -n $backup_exclude_param ];
+	then
+		rsync_exclude_param="--exclude-from=$backup_exclude_param"
+fi
+
 if [ -f $backup_vault_conf/exclude ];
 	then
 		if [ -n $backup_exclude_param ];
@@ -197,8 +202,6 @@ if [ -f $backup_vault_conf/exclude ];
 				exit 1
 		fi
 		backup_exclude_file=$backup_vault_conf/exclude
-	else
-		backup_exclude_file=${backup_exclude_param:-$backup_exclude_default}
 fi
 
 
@@ -207,7 +210,7 @@ if ! echo "$freq_list"|egrep -wq '(hourly|daily|weekly|monthly)';then
 	exit 1
 fi
 
-rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --exclude-from=$backup_exclude_file"
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --exclude-from=$backup_exclude_default $rsync_exclude_param"
 
 rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 err=$?
