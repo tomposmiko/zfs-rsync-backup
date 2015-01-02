@@ -1,0 +1,7 @@
+- locking (per vault)
+- handling faulty finishes
+- reporting
+- script vs. console run
+- expiring
+- parallelization
+- vault listing/displaying
