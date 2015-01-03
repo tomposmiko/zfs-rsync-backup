@@ -103,7 +103,7 @@ backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
 
 
-if [ -n $data_source ];
+if [ ! -z $data_source ];
 	then
 		# check for vault directory
 		if [ -d /$backup_dataset/$vault ]; then
@@ -138,7 +138,7 @@ if [ -n $data_source ];
 		exit 0
 fi
 
-if [ -n $vault_to_list ];
+if [ ! -z $vault_to_list ];
 	then
 		if echo $vault_to_list | grep -q ^$backup_dataset;
 			then
@@ -194,14 +194,14 @@ fi
 
 # exclude file for rsync
 #
-if [ -n $backup_exclude_param ];
+if [ ! -z $backup_exclude_param ];
 	then
 		rsync_exclude_param="--exclude-from=$backup_exclude_param"
 fi
 
 if [ -f $backup_vault_conf/exclude ];
 	then
-		if [ -n $backup_exclude_param ];
+		if [ ! -z $backup_exclude_param ];
 			then
 				echo "Both --exclude-file switch and vault specific exclude file present at the same time!"
 				echo "switch: $backup_exclude_param"
@@ -239,11 +239,11 @@ fi
 
 
 # rsync
-if [ -n interactive ];
+if [ -z interactive ];
 	then
-		rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
-	else
 		rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+	else
+		rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
 fi
 err=$?
 if [ $err = 24 ];
