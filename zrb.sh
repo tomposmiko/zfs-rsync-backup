@@ -91,6 +91,13 @@ while [ "$#" -gt "0" ]; do
   esac
 done
 
+if tty > /dev/null;
+	then
+		interactive=1
+fi
+
+
+
 backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
@@ -232,7 +239,12 @@ fi
 
 
 # rsync
-rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+if [ -n interactive ];
+	then
+		rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+	else
+		rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+fi
 err=$?
 if [ $err = 24 ];
 	then
