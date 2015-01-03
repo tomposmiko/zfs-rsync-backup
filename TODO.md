@@ -1,4 +1,3 @@
 - handling failed jobs
 - reporting
-- script vs. console run
 - expiring
