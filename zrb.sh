@@ -213,7 +213,25 @@ fi
 # rsync parameters
 rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_default $rsync_exclude_param"
 
+# locking
+lockfile="$backup_vault_log/lock"
+if pid_locked=`cat $lockfile`;
+	then
+		pid_now=`pgrep -f "/bin/bash -e ./zfs-rsync-backup.sh -v.* $vault"`
+		if [ $pid_locked -eq $pid_now ];
+			then
+				echo "Backup job is already running!"
+				exit 1
+			else
+				echo "Stale pidfile exists...removing."
+				rm -f $lockfile
+		fi
+	else
+		echo $$ > $lockfile
+fi
 
+
+# rsync
 rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 err=$?
 if [ $err = 24 ];
@@ -221,6 +239,7 @@ if [ $err = 24 ];
 		return 0
 fi
 
+rm -f $lockfile
 
 
 for freq_type in $freq_list;do
