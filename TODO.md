@@ -1,4 +1,3 @@
-- locking (per vault)
 - handling filed jobs
 - reporting
 - script vs. console run
