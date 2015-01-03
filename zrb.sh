@@ -222,7 +222,7 @@ rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude
 
 # locking
 lockfile="$backup_vault_log/lock"
-if pid_locked=`cat $lockfile`;
+if pid_locked=`cat $lockfile 2>/dev/null`;
 	then
 		pid_now=`pgrep -f "/bin/bash -e ./zfs-rsync-backup.sh -v.* $vault"`
 		if [ $pid_locked -eq $pid_now ];
