@@ -2,7 +2,7 @@
 pool="tank"
 backup_dataset="$pool/backup"
 date=$(date "+%Y-%m-%d--%H-%M")
-backup_exclude_default="/$pool/etc/zrb/exclude"
+backup_exclude_system="/$pool/etc/zrb/exclude.system"
 prefix=zrb
 
 # logging
@@ -218,7 +218,7 @@ if ! echo "$freq_list"|egrep -wq '(hourly|daily|weekly|monthly)';then
 fi
 
 # rsync parameters
-rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_default $rsync_exclude_param"
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_system $rsync_exclude_param"
 
 # locking
 lockfile="$backup_vault_log/lock"
