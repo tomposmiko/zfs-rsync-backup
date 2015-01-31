@@ -28,10 +28,10 @@ f_usage(){
 	echo "	$0 -a SOURCE -v VAULT"
 	echo "	$0 -l VAULT"
 	echo
-	echo "	   -p|--prefix <prefix>      default: zrb"
+	echo "	   -p|--prefix <prefix>      [zrb]"
 	echo "	   -v|--vault <vault>        "
-	echo "	   -f|--freq <freq type>     hourly,daily,weekly,monthly (comma separated list)"
-	echo "	   -e|--exclude-file <file>  path to common exclude file"
+	echo "	   -f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
+	echo "	   -e|--exclude-file <file>  path to shared exclude file"
 	echo "	   -a|--add <source>         create vault and add source"
 	echo "	   -l|--list <vault>         display vault"
 	echo
@@ -83,6 +83,12 @@ while [ "$#" -gt "0" ]; do
 		vault_to_list=$PARAM
 		shift 2
 	;;
+
+	-q|--quiet)
+		quiet=1
+		shift 1
+	;;
+
 
 	-h|--help|*)
 		f_usage
@@ -211,10 +217,10 @@ if [ -f $backup_vault_conf/exclude ];
 		backup_exclude_file=$backup_vault_conf/exclude
 fi
 
-
-if ! echo "$freq_list"|egrep -wq '(hourly|daily|weekly|monthly)';then
-	echo "No frequency defined (hourly|daily|weekly|monthly)!"
-	exit 1
+# set default frequency to daily
+if [ -z "$freq_list"];
+	then
+		freq_list="daily"
 fi
 
 # rsync parameters
@@ -224,7 +230,7 @@ rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude
 lockfile="$backup_vault_log/lock"
 if pid_locked=`cat $lockfile 2>/dev/null`;
 	then
-		pid_now=`pgrep -f "/bin/bash -e ./zfs-rsync-backup.sh -v.* $vault"`
+		pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
 		if [ $pid_locked -eq $pid_now ];
 			then
 				echo "Backup job is already running!"
@@ -237,10 +243,10 @@ if pid_locked=`cat $lockfile 2>/dev/null`;
 		echo $$ > $lockfile
 fi
 
-
 # rsync
-if [ -z interactive ];
+if [ -z $interactive ];
 	then
+		echo $vault
 		rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 	else
 		rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
