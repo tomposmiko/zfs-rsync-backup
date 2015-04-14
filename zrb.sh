@@ -196,6 +196,12 @@ if [ ! -d $backup_vault_log ]; then
 		exit 1
 fi
 
+
+if [ -f $backup_vault_conf/DISABLE ];
+	then
+		exit 0
+fi
+
 # path of the source
 # Eg.: /mnt/source/dir
 #      host:/mnt/source/dir
