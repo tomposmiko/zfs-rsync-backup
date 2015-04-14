@@ -218,7 +218,7 @@ if [ -f $backup_vault_conf/exclude ];
 fi
 
 # set default frequency to daily
-if [ -z "$freq_list"];
+if [ -z "$freq_list" ];
 	then
 		freq_list="daily"
 fi
