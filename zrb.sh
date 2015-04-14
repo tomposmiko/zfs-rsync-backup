@@ -37,6 +37,17 @@ f_usage(){
 	echo
 }
 
+f_rsync() {
+	rsync "$@"
+	e=$?
+	if test $e = 24;
+		then
+			exit 0
+	fi
+
+	exit $e
+}
+
 # Exit if no arguments!
 let $# || { f_usage; exit 1; }
 
@@ -243,18 +254,14 @@ if pid_locked=`cat $lockfile 2>/dev/null`;
 		echo $$ > $lockfile
 fi
 
+
 # rsync
 if [ -z $interactive ];
 	then
 		echo $vault
-		rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 	else
-		rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
-fi
-err=$?
-if [ $err = 24 ];
-	then
-		return 0
+		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
 fi
 
 rm -f $lockfile
