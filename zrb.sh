@@ -270,6 +270,10 @@ if [ -z $interactive ];
 		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
 fi
 
+if [ $? -eq 0 ];
+	then
+		touch /$backup_dataset/$vault/FINISHED
+fi
 rm -f $lockfile
 
 
