@@ -1,0 +1,3 @@
+# M	H	DOM	MON	DOW		user	command                                                                                                                                                                             
+0	21	*	*	1-6		root	/root/bin/parallel-backup.sh -f daily
+0	21	*	*	7		root	/root/bin/parallel-backup.sh -f daily,weekly
