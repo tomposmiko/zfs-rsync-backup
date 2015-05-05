@@ -39,7 +39,7 @@ f_usage(){
 }
 
 f_rsync() {
-	/root/bin/rsync-novanished.sh $@
+	rsync-novanished.sh $@
 }
 
 # Exit if no arguments!
