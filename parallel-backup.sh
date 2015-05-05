@@ -10,9 +10,10 @@ f_check_switch_param(){
 
 f_usage(){
 	echo "Usage:"
-	echo "  $0             verbose output"
-	echo "  $0 -q          display vaults"
-	echo "  $0 -qq         full quiet"
+	echo "  $0                    verbose output"
+	echo "  $0 -q                 display vaults"
+	echo "  $0 -qq                full quiet"
+    echo "  $0 -f <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
 	echo
 }
 
@@ -21,6 +22,13 @@ f_usage(){
 
 while [ "$#" -gt "0" ]; do
   case "$1" in
+    -f|--freq)
+        PARAM=$2
+        f_check_switch_param $PARAM
+        freq_list=$PARAM
+        shift 2
+    ;;
+
 	-q)
 		quiet_little=1
 		break
@@ -48,9 +56,16 @@ if tty > /dev/null;
 		interactive=1
 fi
 
+# set default frequency to daily
+if [ -z "$freq_list" ];
+    then
+        freq_list="daily"
+fi
+
+
 
 vaults=`mktemp /tmp/vaults.XXXX`
 
 zfs list -H -s name -o name -r tank/backup|grep -v ^tank/backup$|sed 's@^tank/backup/@@' > $vaults
-parallel -v -j 2 -a $vaults zrb.sh -f daily -v {1} > /dev/null
+parallel -v -j 2 -a $vaults zrb.sh -f $freq_list -v {1} > /dev/null
 #rm $vaults
