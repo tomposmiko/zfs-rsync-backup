@@ -49,7 +49,8 @@ if tty > /dev/null;
 fi
 
 
+vaults=`mktemp /tmp/vaults.XXXX`
 
-vaults=`zfs list -H -o name -r tank/backup|grep -v ^tank/backup$|sed 's@^tank/backup/@@'`
-echo "$vaults" | parallel -v -j 2 -a - zrb.sh -f daily -v {1} > /dev/null
-
+zfs list -H -o name -r tank/backup|grep -v ^tank/backup$|sed 's@^tank/backup/@@' > $vaults
+parallel -v -j 2 -a $vaults zrb.sh -f daily -v {1} > /dev/null
+#rm $vaults

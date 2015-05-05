@@ -34,18 +34,12 @@ f_usage(){
 	echo "	   -e|--exclude-file <file>  path to shared exclude file"
 	echo "	   -a|--add <source>         create vault and add source"
 	echo "	   -l|--list <vault>         display vault"
+	echo "	   -q|--quiet				 quiet"
 	echo
 }
 
 f_rsync() {
-	rsync "$@"
-	e=$?
-	if test $e = 24;
-		then
-			exit 0
-	fi
-
-	exit $e
+	/root/bin/rsync-novanished.sh $@
 }
 
 # Exit if no arguments!
@@ -125,14 +119,14 @@ if [ ! -z $data_source ];
 		# check for vault directory
 		if [ -d /$backup_dataset/$vault ]; then
 			echo "Cannot add vault!"
-        	echo "Existent vault directory: /$backup_dataset/$vault !"
+        	echo "Existing vault directory: /$backup_dataset/$vault !"
 	        exit 1
 		fi
 
 		# check for vault zfs dataset
-		if zfs list $backup_dataset/$vault > /dev/null 2>&1; then
+		if zfs list -s name $backup_dataset/$vault > /dev/null 2>&1; then
 			echo "Cannot add vault!"
-        	echo "Existent dataset for vault: $backup_dataset/$vault !"
+        	echo "Existing dataset: $backup_dataset/$vault !"
         	exit 1
 		fi
 		if zfs create $backup_dataset/$vault;
@@ -148,7 +142,7 @@ if [ ! -z $data_source ];
 				exit 1
 		fi
 		echo
-		zfs list $backup_dataset/$vault
+		zfs list -s name $backup_dataset/$vault
 		echo
 		echo "Data source: $data_source"
 		echo
@@ -159,15 +153,15 @@ if [ ! -z $vault_to_list ];
 	then
 		if echo $vault_to_list | grep -q ^$backup_dataset;
 			then
-				zfs list -t all -r $vault_to_list
+				zfs list -s name -t all -r $vault_to_list
 			else
-				zfs list -t all -r $backup_dataset/$vault_to_list
+				zfs list -s name -t all -r $backup_dataset/$vault_to_list
 		fi
 		exit 0
 fi
 
 # check for vault zfs dataset
-if ! zfs list $backup_dataset/$vault > /dev/null 2>&1;then
+if ! zfs list -s name $backup_dataset/$vault > /dev/null 2>&1;then
 		echo "Non-existent dataset for vault: $backup_dataset/$vault !"
 		exit 1
 fi
@@ -247,7 +241,8 @@ rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude
 lockfile="$backup_vault_log/lock"
 if pid_locked=`cat $lockfile 2>/dev/null`;
 	then
-		pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
+		#pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
+		pid_now=$$
 		if [ $pid_locked -eq $pid_now ];
 			then
 				echo "Backup job is already running!"
@@ -267,7 +262,13 @@ if [ -z $interactive ];
 		echo $vault
 		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 	else
-		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+		if [ x$quiet == x1 ];
+			then
+				echo $vault
+				f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+			else
+				f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+		fi
 fi
 
 if [ $? -eq 0 ];
