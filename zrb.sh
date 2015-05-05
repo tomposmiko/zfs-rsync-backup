@@ -279,5 +279,5 @@ rm -f $lockfile
 
 
 for freq_type in $freq_list;do
-	zfs snap $backup_dataset/$vault@${prefix}-${freq_type}-${date}
+	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
 done
