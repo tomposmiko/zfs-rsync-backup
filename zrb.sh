@@ -4,6 +4,7 @@
 # default variables
 pool="tank"
 backup_dataset="$pool/backup"
+PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
 global_config_dir="/$pool/etc/zrb"
@@ -304,6 +305,7 @@ f_expire(){
 }
 
 
+################ expiring only ##################
 if [ $expire == only ];
 	then
 		for freq_type in $freq_list;do
@@ -311,6 +313,7 @@ if [ $expire == only ];
 		done
 		exit 0
 fi
+################ expiring only ##################
 
 
 # rsync parameters
