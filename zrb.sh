@@ -147,7 +147,7 @@ backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
 
-
+########################## initializing vault #########################
 if [ ! -z $data_source ];
 	then
 		# check for directory of vault
@@ -182,7 +182,10 @@ if [ ! -z $data_source ];
 		echo
 		exit 0
 fi
+########################## initializing vault #########################
 
+
+################## snapshots listing of vault #######################
 if [ ! -z $vault_to_list ];
 	then
 		if echo $vault_to_list | grep -q ^$backup_dataset;
@@ -193,43 +196,51 @@ if [ ! -z $vault_to_list ];
 		fi
 		exit 0
 fi
+################## snapshots listing of vault #######################
 
-# check for vault zfs dataset
+
+################## checks for entries in vault ######################
+# check for zfs dataset of vault
 if ! zfs list -s name $backup_dataset/$vault > /dev/null 2>&1;then
 		say "$red Non-existent dataset for vault: $backup_dataset/$vault !"
 		exit 1
 fi
 
-# check for vault directory
+# check for directory of vault
 if [ ! -d /$backup_dataset/$vault ]; then
 		say "$red Non-existent vault directory: /$backup_dataset/$vault !"
 		exit 1
 fi
 
-# check for vault/config directory
+# check for config directory of vault
 if [ ! -d $backup_vault_conf ]; then
 		say "$red Non-existent config directory: $backup_vault_conf !"
 		exit 1
 fi
 
-# check for vault/data directory
+# check for data directory of vault
 if [ ! -d $backup_vault_dest ]; then
 		say "$red Non-existent rsync destination directory: $backup_vault_dest !"
 		exit 1
 fi
 
-# check for vault/log directory
+# check for log directory of vault
 if [ ! -d $backup_vault_log ]; then
 		sat "$red Non-existent rsync destination directory: $backup_vault_log !"
 		exit 1
 fi
+################## checks for entries in vault ######################
 
 
+############## check if backup is disabled for this vault ###################
 if [ -f $backup_vault_conf/DISABLE ];
 	then
 		exit 0
 fi
+############## check if backup is disabled for this vault ###################
 
+
+############## initializing backup source ###############
 # path of the source
 # Eg.: /mnt/source/dir
 #      host:/mnt/source/dir
@@ -241,14 +252,18 @@ if [ -f $backup_vault_conf/source ];
 		say "$red Non-existent source file: $backup_vault_conf/source !"
 		exit 1
 fi
+############## initializing backup source ###############
 
-# exclude file for rsync
-#
+
+############### exclude file for rsync ##################
 if [ ! -z $backup_exclude_param ];
 	then
 		rsync_exclude_param="--exclude-from=$backup_exclude_param"
 fi
+############### exclude file for rsync ##################
 
+
+################ global exclude file ######################
 if [ -f $backup_vault_conf/exclude ];
 	then
 		if [ ! -z $backup_exclude_param ];
@@ -260,6 +275,8 @@ if [ -f $backup_vault_conf/exclude ];
 		fi
 		backup_exclude_file=$backup_vault_conf/exclude
 fi
+################ global exclude file ######################
+
 
 f_expire(){
 	if [ -f $global_expire ];
@@ -347,6 +364,8 @@ fi
 f_lock_remove
 ################## doing rsync ####################
 
+
+################# doing snapshot & expiring ##############
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
 	if [ $expire == yes ];
@@ -354,3 +373,4 @@ for freq_type in $freq_list;do
             f_expire
 	fi
 done
+################# doing snapshot & expiring ##############
