@@ -1,4 +1,5 @@
 #!/bin/bash -e
+#set -x
 
 # default variables
 pool="tank"
@@ -11,7 +12,8 @@ global_expire="$global_config_dir/expire"
 
 prefix=zrb
 freq_list=daily
-
+expire=no
+quiet=0
 
 # https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
 uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
@@ -48,22 +50,19 @@ f_check_switch_param(){
 
 f_usage(){
 	echo "Usage:"
-	echo "	$0 -p PREFIX -v VAULT -f FREQUENCY"
-	echo "	$0 -a SOURCE -v VAULT"
-	echo "	$0 -l VAULT"
+	echo " $0 -p PREFIX -v VAULT -f FREQUENCY"
+	echo " $0 -a SOURCE -v VAULT"
+	echo " $0 -l VAULT"
 	echo
-	echo "	   -p|--prefix <prefix>      [zrb]"
-	echo "	   -v|--vault <vault>        "
-	echo "	   -f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
-	echo "	   -e|--exclude-file <file>  path to shared exclude file"
-	echo "	   -a|--add <source>         create vault and add source"
-	echo "	   -l|--list <vault>         display vault"
-	echo "	   -q|--quiet				 quiet"
+	echo "	-p|--prefix <prefix>      [zrb]"
+	echo "	-v|--vault <vault>        "
+	echo "	-f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
+	echo "	-x|--exclude-file <file>  path to shared exclude file"
+	echo "	-e|--expire	<goal>		  yes | [no] | only"
+	echo "	-a|--add <source>         create vault and add source"
+	echo "	-l|--list <vault>         display vault"
+	echo "	-q|--quiet				 quiet"
 	echo
-}
-
-f_rsync() {
-	rsync-novanished.sh $@
 }
 
 # Exit if no arguments!
@@ -85,6 +84,13 @@ while [ "$#" -gt "0" ]; do
 		shift 2
 	;;
 
+	-e|--expire)
+		PARAM=$2
+		f_check_switch_param $PARAM
+		expire=$PARAM
+		shift 2
+	;;
+
 	-f|--freq)
 		PARAM=$2
 		f_check_switch_param $PARAM
@@ -92,7 +98,7 @@ while [ "$#" -gt "0" ]; do
 		shift 2
 	;;
 
-	-e|--exclude-file)
+	-x|--exclude-file)
 		PARAM=$2
 		f_check_switch_param $PARAM
 		backup_exclude_param=$PARAM
@@ -129,6 +135,8 @@ done
 if tty > /dev/null;
 	then
 		interactive=1
+	else
+		interactive=0
 fi
 
 
@@ -253,26 +261,38 @@ if [ -f $backup_vault_conf/exclude ];
 fi
 
 f_expire(){
-if [ -f $global_expire ];
-	then
-		. $global_expire
-	else
-		say "$red No default expire file: $global_expire !"
-		exit 1
-fi
-snap_list=`mktemp /tmp/snap_list.XXXXXX`
-zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
-for snap_orig in `cat $snap_list`;do
-	snap_date=`echo $snap_orig | sed -e "s/${prefix}_${freq}_//" -e 's/--/ /'`
-	snap_epoch=`date "+%s" -d "$snap_date"`
-	date_current=`date "+%s"`
-	say "$green ${snap_orig}"
-	#zfs destroy ${dataset}
-done
+	if [ -f $global_expire ];
+		then
+			. $global_expire
+		else
+			say "$red No default expire file: $global_expire !"
+			exit 1
+	fi
+	expire_rule="expire_${freq_type}"
+	expire_limit=`date "+%s" -d "${!expire_rule} ago"`
 
-rm -f $snap_list
+	snap_list=`mktemp /tmp/snap_list.XXXXXX`
+	zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
+	for snap_orig in `cat $snap_list`;do
+		snap_date=`echo $snap_orig | sed "s,\(${prefix}\)_\(${freq_type}\)_\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)--\([0-9][0-9]\)-\([0-9][0-9]\),\3 \4:\5,"`
+		snap_epoch=`date "+%s" -d "$snap_date"`
+		if [ $snap_epoch -lt $expire_limit ];
+			then
+				say "$green ${snap_orig}"
+		fi
+	done
 
+	rm -f $snap_list
 }
+
+
+if [ $expire == only ];
+	then
+		for freq_type in $freq_list;do
+			f_expire
+		done
+		exit 0
+fi
 
 
 # rsync parameters
@@ -297,18 +317,25 @@ if pid_locked=`cat $lockfile 2>/dev/null`;
 fi
 
 
+f_rsync() {
+    rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
+}
+
 # rsync
-if [ -z $interactive ];
+if [ $interactive -eq 0 ];
 	then
 		echo $vault
-		f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+		#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+		f_rsync > $backup_vault_log/rsync.log
 	else
-		if [ x$quiet == x1 ];
+		if [ $quiet -eq 1 ];
 			then
 				echo $vault
-				f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+				#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
+				f_rsync > $backup_vault_log/rsync.log
 			else
-				f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+				#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+				f_rsync | tee $backup_vault_log/rsync.log
 		fi
 fi
 
@@ -321,4 +348,9 @@ rm -f $lockfile
 
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
+	if [ $expire == yes ];
+    	then
+            f_expire
+	fi
+
 done
