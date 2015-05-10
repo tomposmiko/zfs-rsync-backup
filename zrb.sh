@@ -150,14 +150,14 @@ backup_vault_log="/$backup_dataset/$vault/log"
 
 if [ ! -z $data_source ];
 	then
-		# check for vault directory
+		# check for directory of vault
 		if [ -d /$backup_dataset/$vault ]; then
 			say "$red Cannot add vault!"
 			say "$red Existing directory: /$backup_dataset/$vault !"
 	        exit 1
 		fi
 
-		# check for vault zfs dataset
+		# check for zfs dataset of vault
 		if zfs list -s name $backup_dataset/$vault > /dev/null 2>&1; then
 			say "$red Cannot add vault!"
         	say "$red Existing dataset: $backup_dataset/$vault !"
@@ -300,29 +300,36 @@ fi
 # rsync parameters
 rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param"
 
-# locking
-lockfile="$backup_vault_log/lock"
-if pid_locked=`cat $lockfile 2>/dev/null`;
-	then
-		#pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
-		pid_now=$$
-		if [ $pid_locked -eq $pid_now ];
-			then
-				say "$red Backup job is already running!"
-				exit 1
-			else
-				say "$purple Stale pidfile exists...removing."
-				rm -f $lockfile
-		fi
-	else
-		echo $$ > $lockfile
-fi
+f_lock_create(){
+	lockfile="$backup_vault_log/lock"
+	if pid_locked=`cat $lockfile 2>/dev/null`;
+		then
+			#pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
+			pid_now=$$
+			if [ $pid_locked -eq $pid_now ];
+				then
+					say "$red Backup job is already running!"
+					exit 1
+				else
+					say "$purple Stale pidfile exists...removing."
+					rm -f $lockfile
+			fi
+		else
+			echo $$ > $lockfile
+	fi
+}
 
+f_lock_remove(){
+	rm -f lockfile
+}
 
 f_rsync() {
     rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
 }
 
+
+################## doing rsync ####################
+f_lock_create
 # rsync
 if [ $quiet -eq 1 ];
 	then
@@ -338,15 +345,13 @@ if [ $? -eq 0 ];
 	then
 		touch /$backup_dataset/$vault/FINISHED
 fi
-rm -f $lockfile
-
+f_lock_remove
+################## doing rsync ####################
 
 for freq_type in $freq_list;do
-	say "$green Creating snapshot..."
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
 	if [ $expire == yes ];
     	then
             f_expire
 	fi
-
 done
