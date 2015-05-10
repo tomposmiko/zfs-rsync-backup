@@ -1,9 +1,12 @@
 #!/bin/bash -e
+
+# default variables
 pool="tank"
 backup_dataset="$pool/backup"
 date=$(date "+%Y-%m-%d--%H-%M")
 backup_exclude_system="/$pool/etc/zrb/exclude.system"
 prefix=zrb
+freq_list=daily
 
 # logging
 #f_log(){
@@ -228,11 +231,21 @@ if [ -f $backup_vault_conf/exclude ];
 		backup_exclude_file=$backup_vault_conf/exclude
 fi
 
-# set default frequency to daily
-if [ -z "$freq_list" ];
-	then
-		freq_list="daily"
-fi
+f_expire(){
+snap_list=`mktemp /tmp/dataset_list.XXXXXX`
+zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${dataset_list}
+for snap_orig in `cat $dataset_list`;do
+	snap_dated=`echo $snap_orig | sed 's/--/ /'`
+	snap_epoch=`date "+%s" -d "$snap_dated"`
+	date_current=`date "+%s"`
+	say "$green ${dataset}"
+	#zfs destroy ${dataset}
+done
+
+rm -f $dataset_list
+
+}
+
 
 # rsync parameters
 rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_system $rsync_exclude_param"
