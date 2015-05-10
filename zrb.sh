@@ -270,6 +270,7 @@ f_expire(){
 			say "$red No default expire file: $global_expire !"
 			exit 1
 	fi
+	test -f $backup_vault_conf/expire && . $backup_vault_conf/expire
 	expire_rule="expire_${freq_type}"
 	expire_limit=`date "+%s" -d "${!expire_rule} ago"`
 
@@ -283,7 +284,6 @@ f_expire(){
 				say "$green ${snap_orig}"
 		fi
 	done
-
 	rm -f $snap_list
 }
 
