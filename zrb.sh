@@ -53,6 +53,7 @@ f_usage(){
 	echo " $0 -p PREFIX -v VAULT -f FREQUENCY"
 	echo " $0 -a SOURCE -v VAULT"
 	echo " $0 -l VAULT"
+	echo " $0 -v VAULT -e only"
 	echo
 	echo "	-p|--prefix <prefix>      [zrb]"
 	echo "	-v|--vault <vault>        "
@@ -61,7 +62,7 @@ f_usage(){
 	echo "	-e|--expire	<goal>		  yes | [no] | only"
 	echo "	-a|--add <source>         create vault and add source"
 	echo "	-l|--list <vault>         display vault"
-	echo "	-q|--quiet				 quiet"
+	echo "	-q|--quiet                quiet"
 	echo
 }
 
