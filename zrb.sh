@@ -31,6 +31,15 @@ if [[ $- != *i* ]]
 		say() { true; }
 fi
 
+
+if tty > /dev/null;
+    then
+        #interactive=1
+        quiet=0
+    else
+        quiet=1
+fi
+
 # logging
 #f_log(){
 #	date=`date "+%Y-%m-%d %T"`
@@ -43,7 +52,7 @@ fi
 
 f_check_switch_param(){
 	if echo x"$1" |grep -q ^x$;then
-		echo "Missing argument!"
+		say "$red Missing argument!"
 		exit 1
 	fi
 }
@@ -64,6 +73,7 @@ f_usage(){
 	echo "	-l|--list <vault>         display vault"
 	echo "	-q|--quiet                quiet"
 	echo
+	exit 1
 }
 
 # Exit if no arguments!
@@ -133,15 +143,6 @@ while [ "$#" -gt "0" ]; do
   esac
 done
 
-if tty > /dev/null;
-	then
-		interactive=1
-	else
-		interactive=0
-fi
-
-
-
 backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
@@ -151,15 +152,15 @@ if [ ! -z $data_source ];
 	then
 		# check for vault directory
 		if [ -d /$backup_dataset/$vault ]; then
-			echo "Cannot add vault!"
-        	echo "Existing vault directory: /$backup_dataset/$vault !"
+			say "$red Cannot add vault!"
+			say "$red Existing directory: /$backup_dataset/$vault !"
 	        exit 1
 		fi
 
 		# check for vault zfs dataset
 		if zfs list -s name $backup_dataset/$vault > /dev/null 2>&1; then
-			echo "Cannot add vault!"
-        	echo "Existing dataset: $backup_dataset/$vault !"
+			say "$red Cannot add vault!"
+        	say "$red Existing dataset: $backup_dataset/$vault !"
         	exit 1
 		fi
 		if zfs create $backup_dataset/$vault;
@@ -170,14 +171,14 @@ if [ ! -z $data_source ];
 				echo $data_source > $backup_vault_conf/source
 
 			else
-				echo "Cannot create dataset:"
-				echo "$ zfs create $backup_dataset/$vault"
+				say "$red Cannot create dataset:"
+				say "$red $ zfs create $backup_dataset/$vault"
 				exit 1
 		fi
 		echo
 		zfs list -s name $backup_dataset/$vault
 		echo
-		echo "Data source: $data_source"
+		say "$green Data source: $data_source"
 		echo
 		exit 0
 fi
@@ -195,31 +196,31 @@ fi
 
 # check for vault zfs dataset
 if ! zfs list -s name $backup_dataset/$vault > /dev/null 2>&1;then
-		echo "Non-existent dataset for vault: $backup_dataset/$vault !"
+		say "$red Non-existent dataset for vault: $backup_dataset/$vault !"
 		exit 1
 fi
 
 # check for vault directory
 if [ ! -d /$backup_dataset/$vault ]; then
-		echo "Non-existent vault directory: /$backup_dataset/$vault !"
+		say "$red Non-existent vault directory: /$backup_dataset/$vault !"
 		exit 1
 fi
 
 # check for vault/config directory
 if [ ! -d $backup_vault_conf ]; then
-		echo "Non-existent config directory: $backup_vault_conf !"
+		say "$red Non-existent config directory: $backup_vault_conf !"
 		exit 1
 fi
 
 # check for vault/data directory
 if [ ! -d $backup_vault_dest ]; then
-		echo "Non-existent rsync destination directory: $backup_vault_dest !"
+		say "$red Non-existent rsync destination directory: $backup_vault_dest !"
 		exit 1
 fi
 
 # check for vault/log directory
 if [ ! -d $backup_vault_log ]; then
-		echo "Non-existent rsync destination directory: $backup_vault_log !"
+		sat "$red Non-existent rsync destination directory: $backup_vault_log !"
 		exit 1
 fi
 
@@ -238,7 +239,7 @@ if [ -f $backup_vault_conf/source ];
 		#backup_source=$(cut -d'=' -f2 $backup_vault_conf/source)
 		backup_source=$(cat $backup_vault_conf/source)
 	else
-		echo "Non-existent source file: $backup_vault_conf/source !"
+		say "$red Non-existent source file: $backup_vault_conf/source !"
 		exit 1
 fi
 
@@ -253,9 +254,9 @@ if [ -f $backup_vault_conf/exclude ];
 	then
 		if [ ! -z $backup_exclude_param ];
 			then
-				echo "Both --exclude-file switch and vault specific exclude file present at the same time!"
-				echo "switch: $backup_exclude_param"
-				echo "file: $backup_vault_conf/exclude"
+				say "$red The switch '--exclude-file' and 'vault specific exclude' file are mutually exclusive!"
+				say "$red switch: $backup_exclude_param"
+				say "$red exclude file: $backup_vault_conf/exclude"
 				exit 1
 		fi
 		backup_exclude_file=$backup_vault_conf/exclude
@@ -307,10 +308,10 @@ if pid_locked=`cat $lockfile 2>/dev/null`;
 		pid_now=$$
 		if [ $pid_locked -eq $pid_now ];
 			then
-				echo "Backup job is already running!"
+				say "$red Backup job is already running!"
 				exit 1
 			else
-				echo "Stale pidfile exists...removing."
+				say "$purple Stale pidfile exists...removing."
 				rm -f $lockfile
 		fi
 	else
@@ -323,21 +324,14 @@ f_rsync() {
 }
 
 # rsync
-if [ $interactive -eq 0 ];
+if [ $quiet -eq 1 ];
 	then
-		echo $vault
+		say "$green $vault"
 		#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 		f_rsync > $backup_vault_log/rsync.log
 	else
-		if [ $quiet -eq 1 ];
-			then
-				echo $vault
-				#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
-				f_rsync > $backup_vault_log/rsync.log
-			else
-				#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
-				f_rsync | tee $backup_vault_log/rsync.log
-		fi
+		#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+		f_rsync | tee $backup_vault_log/rsync.log
 fi
 
 if [ $? -eq 0 ];
@@ -348,6 +342,7 @@ rm -f $lockfile
 
 
 for freq_type in $freq_list;do
+	say "$green Creating snapshot..."
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
 	if [ $expire == yes ];
     	then
