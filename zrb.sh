@@ -236,7 +236,6 @@ fi
 #
 if [ -f $backup_vault_conf/source ];
 	then
-		#backup_source=$(cut -d'=' -f2 $backup_vault_conf/source)
 		backup_source=$(cat $backup_vault_conf/source)
 	else
 		say "$red Non-existent source file: $backup_vault_conf/source !"
