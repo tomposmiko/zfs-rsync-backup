@@ -1,0 +1,5 @@
+#
+expire_hourly=24
+expire_daily=14
+expire_weekly=4
+expire_monthly=6
