@@ -4,9 +4,30 @@
 pool="tank"
 backup_dataset="$pool/backup"
 date=$(date "+%Y-%m-%d--%H-%M")
-backup_exclude_system="/$pool/etc/zrb/exclude.system"
+
+global_config_dir="/$pool/etc/zrb"
+global_exclude="$global_config_dir/exclude"
+global_expire="$global_config_dir/expire"
+
 prefix=zrb
 freq_list=daily
+
+
+# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
+uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
+if [[ $- != *i* ]]
+   then say() { echo -ne $1;echo -e $nocolor; }
+		# Colors, yo!
+		green="\e[1;32m"
+		red="\e[1;31m"
+		blue="\e[1;34m"
+		purple="\e[1;35m"
+		cyan="\e[1;36m"
+		nocolor="\e[0m"
+   else
+		# do nothing
+		say() { true; }
+fi
 
 # logging
 #f_log(){
@@ -232,13 +253,20 @@ if [ -f $backup_vault_conf/exclude ];
 fi
 
 f_expire(){
+if [ -f $global_expire ];
+	then
+		. $global_expire
+	else
+		say "$red No default expire file: $global_expire !"
+		exit 1
+fi
 snap_list=`mktemp /tmp/dataset_list.XXXXXX`
-zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${dataset_list}
-for snap_orig in `cat $dataset_list`;do
-	snap_dated=`echo $snap_orig | sed 's/--/ /'`
-	snap_epoch=`date "+%s" -d "$snap_dated"`
+zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
+for snap_orig in `cat $snap_list`;do
+	snap_date=`echo $snap_orig | sed -e "s/${prefix}_${freq}_//" -e 's/--/ /'`
+	snap_epoch=`date "+%s" -d "$snap_date"`
 	date_current=`date "+%s"`
-	say "$green ${dataset}"
+	say "$green ${snap_orig}"
 	#zfs destroy ${dataset}
 done
 
@@ -248,7 +276,7 @@ rm -f $dataset_list
 
 
 # rsync parameters
-rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$backup_exclude_system $rsync_exclude_param"
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param"
 
 # locking
 lockfile="$backup_vault_log/lock"
