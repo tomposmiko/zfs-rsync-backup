@@ -47,7 +47,7 @@ fi
 #	echo "$date $HOSTNAME: $*" >> $logfile;
 #}
 #
-#tempfile=`mktemp /tmp/zpull.XXXX`
+#tempfile=`mktemp /tmp/zrb.XXXX`
 #
 #echo "CLI: $0 $*" >> $tempfile
 
