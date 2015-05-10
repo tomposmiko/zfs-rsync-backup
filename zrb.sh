@@ -260,7 +260,7 @@ if [ -f $global_expire ];
 		say "$red No default expire file: $global_expire !"
 		exit 1
 fi
-snap_list=`mktemp /tmp/dataset_list.XXXXXX`
+snap_list=`mktemp /tmp/snap_list.XXXXXX`
 zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
 for snap_orig in `cat $snap_list`;do
 	snap_date=`echo $snap_orig | sed -e "s/${prefix}_${freq}_//" -e 's/--/ /'`
@@ -270,7 +270,7 @@ for snap_orig in `cat $snap_list`;do
 	#zfs destroy ${dataset}
 done
 
-rm -f $dataset_list
+rm -f $snap_list
 
 }
 
