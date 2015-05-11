@@ -293,12 +293,30 @@ f_expire(){
 
 	snap_list=`mktemp /tmp/snap_list.XXXXXX`
 	zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
-	for snap_orig in `cat $snap_list`;do
-		snap_date=`echo $snap_orig | sed "s,\(${prefix}\)_\(${freq_type}\)_\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)--\([0-9][0-9]\)-\([0-9][0-9]\),\3 \4:\5,"`
+	snap_all_num=`grep -c "${prefix}_${freq_type}_" ${snap_list}`
+############## TEMP #######################
+	least2="least_keep_date_${freq_type}"
+	echo "least_keep_date_$freq_type -> ${!least2}"
+############## TEMP #######################
+
+	# default is $least_keep_count
+	snap_min_count="least_keep_count_${freq_type}"
+	snap_count=${!snap_min_count}
+	for snap_name in `cat $snap_list`;do
+		snap_date=`echo $snap_name | sed "s,\(${prefix}\)_\(${freq_type}\)_\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)--\([0-9][0-9]\)-\([0-9][0-9]\),\3 \4:\5,"`
 		snap_epoch=`date "+%s" -d "$snap_date"`
 		if [ $snap_epoch -lt $expire_limit ];
 			then
-				say "$green ${snap_orig}"
+				# actually remove snapshot
+				# counting from $least_keep_count
+				#say "$green ${snap_name}"
+				if [ $snap_count -lt $snap_all_num ] ;
+					then
+						let snap_count=${snap_count}+1
+						say "$green ${snap_name}"
+					else
+						break
+				fi
 		fi
 	done
 	rm -f $snap_list
