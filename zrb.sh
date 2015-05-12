@@ -294,10 +294,6 @@ f_expire(){
 	snap_list=`mktemp /tmp/snap_list.XXXXXX`
 	zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
 	snap_all_num=`grep -c "${prefix}_${freq_type}_" ${snap_list}`
-############## TEMP #######################
-	least2="least_keep_date_${freq_type}"
-	echo "least_keep_date_$freq_type -> ${!least2}"
-############## TEMP #######################
 
 	# default is $least_keep_count
 	snap_min_count="least_keep_count_${freq_type}"
