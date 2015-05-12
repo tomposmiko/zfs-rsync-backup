@@ -67,5 +67,5 @@ fi
 vaults=`mktemp /tmp/vaults.XXXX`
 
 zfs list -H -s name -o name -r tank/backup|grep -v ^tank/backup$|sed 's@^tank/backup/@@' > $vaults
-parallel -v -j 2 -a $vaults zrb.sh -f $freq_list -v {1} > /dev/null
+parallel -v -j 2 -a $vaults zrb.sh -f $freq_list -v {1}
 #rm $vaults
