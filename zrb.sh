@@ -269,7 +269,7 @@ if [ -f $backup_vault_conf/exclude ];
 	then
 		if [ ! -z $backup_exclude_param ];
 			then
-				say "$red The switch '--exclude-file' and 'vault specific exclude' file are mutually exclusive!"
+				say "$red The switch '--exclude-file' and the 'vault specific exclude' file are mutually exclusive!"
 				say "$red switch: $backup_exclude_param"
 				say "$red exclude file: $backup_vault_conf/exclude"
 				exit 1
