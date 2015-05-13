@@ -309,7 +309,8 @@ f_expire(){
 				if [ $snap_count -lt $snap_all_num ] ;
 					then
 						let snap_count=${snap_count}+1
-						say "$green ${snap_name}"
+						say "$green ${backup_dataset}/${vault}@${snap_name}"
+						zfs destroy ${backup_dataset}/${vault}@${snap_name}
 					else
 						break
 				fi

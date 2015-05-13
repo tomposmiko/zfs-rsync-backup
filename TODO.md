@@ -1,3 +1,2 @@
 - handling failed jobs
 - reporting
-- expiring
