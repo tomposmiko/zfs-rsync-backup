@@ -144,6 +144,12 @@ while [ "$#" -gt "0" ]; do
   esac
 done
 
+
+if [ -f $global_config_dir/backup_dataset ];
+	then
+		backup_dataset=`cat  $global_config_dir/backup_dataset`
+fi
+
 backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
