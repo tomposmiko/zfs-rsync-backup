@@ -352,10 +352,14 @@ f_lock_create(){
 					exit 1
 				else
 					say "$purple Stale pidfile exists...removing."
-					rm -f $lockfile
+					f_lock_remove
 			fi
 	fi
 	echo $pid_now > $lockfile
+}
+
+f_lock_remove(){
+    rm -f $lockfile
 }
 
 f_rsync() {
