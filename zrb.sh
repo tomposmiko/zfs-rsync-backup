@@ -233,7 +233,7 @@ fi
 
 # check for log directory of vault
 if [ ! -d $backup_vault_log ]; then
-		sat "$red Non-existent rsync destination directory: $backup_vault_log !"
+		say "$red Non-existent rsync destination directory: $backup_vault_log !"
 		exit 1
 fi
 ################## checks for entries in vault ######################
@@ -342,10 +342,10 @@ rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
+	pid_now=`pgrep -f "zrb.sh.* $vault"`
 	if pid_locked=`cat $lockfile 2>/dev/null`;
 		then
-			#pid_now=`pgrep -f "/bin/bash -e ./zrb.sh -v.* $vault"`
-			pid_now=$$
+			#pid_now=$$
 			if [ $pid_locked -eq $pid_now ];
 				then
 					say "$red Backup job is already running!"
@@ -354,13 +354,8 @@ f_lock_create(){
 					say "$purple Stale pidfile exists...removing."
 					rm -f $lockfile
 			fi
-		else
-			echo $$ > $lockfile
 	fi
-}
-
-f_lock_remove(){
-	rm -f lockfile
+	echo $pid_now > $lockfile
 }
 
 f_rsync() {
