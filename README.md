@@ -26,11 +26,14 @@ Initializes zfs dataset of the VAULT and necessary directories and define rsync 
 $ zrb.sh-v VAULT
 
 #### expiring
-- expire only: zrb.sh-e only -v VAULT
-- backup + expire: zrb.sh-e yes -v VAULT
+- expire only:
+zrb.sh-e only -v VAULT
+- backup + expire:
+zrb.sh-e yes -v VAULT
 
 #### cron job
 $ cp zrb-ruanall /etc/cron.d/
+
 $ chmod 644 /etc/cron.d/zrb-runall
 
 Change whatever timing and frequency (eg. hourly, daily, weekly, monthly) you prefer.
