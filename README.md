@@ -14,9 +14,11 @@ log/ -> logs
 
 #### init
 - local (mounted) directory
+
 $ zrb.sh -a /path/to/backup/source -v VAULT
 
 - remote source (rsync syntax)
+
 $ zrb.sh -a hostname:/ -v VAULT
 
 
@@ -27,8 +29,11 @@ $ zrb.sh-v VAULT
 
 #### expiring
 - expire only:
+
 zrb.sh-e only -v VAULT
+
 - backup + expire:
+
 zrb.sh-e yes -v VAULT
 
 #### cron job
