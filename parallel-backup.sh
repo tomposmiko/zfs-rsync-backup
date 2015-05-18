@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="$HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 
 f_check_switch_param(){
 	if echo x"$1" |grep -q ^x$;then
