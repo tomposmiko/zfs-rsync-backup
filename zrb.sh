@@ -280,7 +280,7 @@ if [ -f $backup_vault_conf/exclude ];
 				say "$red exclude file: $backup_vault_conf/exclude"
 				exit 1
 		fi
-		backup_exclude_file=$backup_vault_conf/exclude
+		rsync_exclude_file=$backup_vault_conf/exclude
 fi
 ################ global exclude file ######################
 
@@ -338,7 +338,7 @@ fi
 
 
 # rsync parameters
-rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param"
+rsync_args="-vrltH -h --delete -pgo --stats -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
