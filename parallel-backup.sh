@@ -5,6 +5,13 @@ export PATH="$HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 # default variables
 pool="tank"
 backup_dataset="$pool/backup"
+PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+date=$(date "+%Y-%m-%d--%H-%M")
+
+global_config_dir="/$pool/etc/zrb"
+global_exclude="$global_config_dir/exclude"
+global_expire="$global_config_dir/expire"
+
 
 
 f_check_switch_param(){
@@ -77,8 +84,8 @@ fi
 
 vaults=`mktemp /tmp/vaults.XXXX`
 
-zfs list -H -s name -o name -r $backup_dataset|grep -v ^$backup_dataset$|sed 's@^tank/backup/@@' > $vaults
+zfs list -H -s name -o name -r $backup_dataset|grep -v ^$backup_dataset$|sed "s@^${backup_dataset}/@@" > $vaults
 echo "BEGIN: `date`"
 parallel -v -j 2 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
-#rm $vaults
+rm $vaults
 echo "END: `date`"
