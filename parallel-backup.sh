@@ -2,6 +2,10 @@
 
 export PATH="$HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# default variables
+pool="tank"
+backup_dataset="$pool/backup"
+
 
 f_check_switch_param(){
 	if echo x"$1" |grep -q ^x$;then
@@ -64,11 +68,16 @@ if [ -z "$freq_list" ];
         freq_list="daily"
 fi
 
+if [ -f $global_config_dir/backup_dataset ];
+    then
+        backup_dataset=`cat  $global_config_dir/backup_dataset`
+fi
+
 
 
 vaults=`mktemp /tmp/vaults.XXXX`
 
-zfs list -H -s name -o name -r tank/backup|grep -v ^tank/backup$|sed 's@^tank/backup/@@' > $vaults
+zfs list -H -s name -o name -r $backup_dataset|grep -v ^$backup_dataset$|sed 's@^tank/backup/@@' > $vaults
 echo "BEGIN: `date`"
 parallel -v -j 2 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
 #rm $vaults

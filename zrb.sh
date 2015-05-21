@@ -280,7 +280,7 @@ if [ -f $backup_vault_conf/exclude ];
 				say "$red exclude file: $backup_vault_conf/exclude"
 				exit 1
 		fi
-		rsync_exclude_file=$backup_vault_conf/exclude
+		rsync_exclude_file="--exclude-from=$backup_vault_conf/exclude"
 fi
 ################ global exclude file ######################
 
@@ -298,7 +298,7 @@ f_expire(){
 	expire_limit=`date "+%s" -d "${!expire_rule} ago"`
 
 	snap_list=`mktemp /tmp/snap_list.XXXXXX`
-	zfs list -t snap -r -H tank/backup/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
+	zfs list -t snap -r -H $backup_dataset/$vault -o name -s name |cut -f2 -d@ > ${snap_list}
 	snap_all_num=`grep -c "${prefix}_${freq_type}_" ${snap_list}`
 
 	# default is $least_keep_count
