@@ -8,8 +8,6 @@ PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
 global_config_dir="/$pool/etc/zrb"
-global_exclude="$global_config_dir/exclude"
-global_expire="$global_config_dir/expire"
 
 prefix=zrb
 freq_list=daily
@@ -60,14 +58,14 @@ f_check_switch_param(){
 
 f_usage(){
 	echo "Usage:"
-	echo " $0 -p PREFIX -v VAULT -f FREQUENCY"
+	echo " $0 -v VAULT [ -p PREFIX ] [ -f FREQUENCY ] [ -e only ]"
 	echo " $0 -a SOURCE -v VAULT"
 	echo " $0 -l VAULT"
-	echo " $0 -v VAULT -e only"
 	echo
 	echo "	-p|--prefix <prefix>      [zrb]"
-	echo "	-v|--vault <vault>        "
+	echo "	-v|--vault <vault>"
 	echo "	-f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
+	echo "	-g|--conffir <dir path>"
 	echo "	-x|--exclude-file <file>  path to shared exclude file"
 	echo "	-e|--expire	<goal>		  yes | [no] | only"
 	echo "	-a|--add <source>         create vault and add source"
@@ -110,6 +108,13 @@ while [ "$#" -gt "0" ]; do
 		shift 2
 	;;
 
+	-g|--confdir)
+		PARAM=$2
+		f_check_switch_param $PARAM
+		global_config_dir=$PARAM
+		shift 2
+	;;
+
 	-x|--exclude-file)
 		PARAM=$2
 		f_check_switch_param $PARAM
@@ -143,6 +148,18 @@ while [ "$#" -gt "0" ]; do
 	;;
   esac
 done
+
+
+################# validate global config directory #####################
+if echo $global_config_dir |grep -q ^/;
+	then
+		global_exclude="$global_config_dir/exclude"
+		global_expire="$global_config_dir/expire"
+	else
+		say "$red configdir does not start with /"
+		exit 1
+fi
+################# validate global config directory #####################
 
 
 if [ -f $global_config_dir/backup_dataset ];
