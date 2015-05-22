@@ -358,6 +358,24 @@ f_lock_create(){
 	echo $pid_now > $lockfile
 }
 
+f_finished_create(){
+	if [ $? -eq 0 ];
+	    then
+    	    touch /$backup_dataset/$vault/FINISHED
+	fi
+}
+
+f_finished_remove(){
+	file_finished=/$backup_dataset/$vault/FINISHED
+	if [ -f $file_finished ];
+		then
+			rm -f $file_finished
+		else
+			say "$red Last backup was not succesful. Continuing from the last point."
+	fi
+}
+
+
 f_lock_remove(){
     rm -f $lockfile
 }
@@ -369,6 +387,7 @@ f_rsync() {
 
 ################## doing rsync ####################
 f_lock_create
+f_finished_remove
 # rsync
 if [ $quiet -eq 1 ];
 	then
@@ -380,10 +399,7 @@ if [ $quiet -eq 1 ];
 		f_rsync | tee $backup_vault_log/rsync.log
 fi
 
-if [ $? -eq 0 ];
-	then
-		touch /$backup_dataset/$vault/FINISHED
-fi
+f_finished_create
 f_lock_remove
 ################## doing rsync ####################
 
