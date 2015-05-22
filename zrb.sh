@@ -342,11 +342,11 @@ rsync_args="-vrltH -z --delete -pgo --stats -D --numeric-ids --inplace --exclude
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
-	pid_now=`pgrep -f "zrb.sh.* $vault"`
+	#pid_now=`pgrep -f "zrb.sh.* $vault"`
+	pid_now=$$
 	if pid_locked=`cat $lockfile 2>/dev/null`;
 		then
-			#pid_now=$$
-			if [ $pid_locked -eq $pid_now ];
+			if ps --no-headers -o comm,args -p $pid_locked |grep -q "zrb.sh.* $vault";
 				then
 					say "$red Backup job is already running!"
 					exit 1
