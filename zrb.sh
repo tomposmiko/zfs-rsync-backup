@@ -420,7 +420,7 @@ fi
 f_lock_remove
 if [ ! $rsync_ret -eq 0 ];
 	then
-		say "$red rsync exited with non-zero code status!"
+		say "$red rsync exited with non-zero status code!"
 		exit 1
 fi
 f_finished_create
