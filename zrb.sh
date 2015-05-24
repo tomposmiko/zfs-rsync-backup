@@ -355,7 +355,7 @@ fi
 
 
 # rsync parameters
-rsync_args="-vrltH -z --delete --delete-excluded -pgo --stats -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
+rsync_args="-vrltH -z --progress --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
@@ -420,7 +420,7 @@ f_finished_create
 f_lock_remove
 ################## doing rsync ####################
 
-
+exit 0
 ################# doing snapshot & expiring ##############
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
