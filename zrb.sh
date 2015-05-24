@@ -420,7 +420,6 @@ f_finished_create
 f_lock_remove
 ################## doing rsync ####################
 
-exit 0
 ################# doing snapshot & expiring ##############
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
