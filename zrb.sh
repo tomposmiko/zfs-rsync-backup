@@ -399,6 +399,7 @@ f_lock_remove(){
 
 f_rsync() {
     rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
+	rsync_ret=$?
 }
 
 
@@ -416,8 +417,13 @@ if [ $quiet -eq 1 ];
 		f_rsync | tee $backup_vault_log/rsync.log
 fi
 
-f_finished_create
 f_lock_remove
+if [ ! $rsync_ret -eq 0 ];
+	then
+		say "$red rsync exited with non-zero code status!"
+		exit 1
+fi
+f_finished_create
 ################## doing rsync ####################
 
 ################# doing snapshot & expiring ##############
