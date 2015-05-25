@@ -58,7 +58,7 @@ f_check_switch_param(){
 
 f_usage(){
 	echo "Usage:"
-	echo " $0 -v VAULT [ -p PREFIX ] [ -f FREQUENCY ] [ -e only ]"
+	echo " $0 -v VAULT [ -p PREFIX ] [ -f FREQUENCY ] [ -e EXPIRING ]"
 	echo " $0 -a SOURCE -v VAULT"
 	echo " $0 -l VAULT"
 	echo
@@ -321,7 +321,7 @@ f_expire(){
 	# default is $least_keep_count
 	snap_min_count="least_keep_count_${freq_type}"
 	snap_count=${!snap_min_count}
-	for snap_name in `cat $snap_list`;do
+	for snap_name in `cat $snap_list | grep ${freq_type}`;do
 		snap_date=`echo $snap_name | sed "s,\(${prefix}\)_\(${freq_type}\)_\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)--\([0-9][0-9]\)-\([0-9][0-9]\),\3 \4:\5,"`
 		snap_epoch=`date "+%s" -d "$snap_date"`
 		if [ $snap_epoch -lt $expire_limit ];
