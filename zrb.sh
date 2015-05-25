@@ -376,7 +376,7 @@ f_lock_create(){
 }
 
 f_finished_create(){
-	if [ $? -eq 0 ];
+	if [ $rsync_ret -eq 0 ];
 	    then
     	    touch /$backup_dataset/$vault/FINISHED
 	fi
@@ -399,7 +399,6 @@ f_lock_remove(){
 
 f_rsync() {
     rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
-	rsync_ret=$?
 }
 
 
@@ -410,12 +409,12 @@ f_finished_remove
 if [ $quiet -eq 1 ];
 	then
 		say "$green $vault"
-		#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ > $backup_vault_log/rsync.log
 		f_rsync > $backup_vault_log/rsync.log
 	else
-		#f_rsync $rsync_args $backup_source/ $backup_vault_dest/ | tee $backup_vault_log/rsync.log
+		set -o pipefail
 		f_rsync | tee $backup_vault_log/rsync.log
 fi
+rsync_ret=$?
 
 f_lock_remove
 if [ ! $rsync_ret -eq 0 ];
