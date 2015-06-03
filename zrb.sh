@@ -12,11 +12,19 @@ global_config_dir="/$pool/etc/zrb"
 prefix=zrb
 freq_list=daily
 expire=no
-quiet=0
+quiet=1
+interactive=0
+
+if /usr/bin/tty > /dev/null;
+    then
+        quiet=0
+        interactive=1
+fi
+
 
 # https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
 uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
-if [[ $- != *i* ]]
+if [[ $interactive -eq 1 ]]
    then say() { echo -ne $1;echo -e $nocolor; }
 		# Colors, yo!
 		green="\e[1;32m"
@@ -30,14 +38,6 @@ if [[ $- != *i* ]]
 		say() { true; }
 fi
 
-
-if tty > /dev/null;
-    then
-        #interactive=1
-        quiet=0
-    else
-        quiet=1
-fi
 
 # logging
 #f_log(){
