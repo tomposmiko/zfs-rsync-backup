@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #set -x
 
 # default variables
@@ -355,7 +355,7 @@ fi
 
 
 # rsync parameters
-rsync_args="-vrltH -z --progress --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
+rsync_args="-vrltH -z --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
@@ -408,11 +408,41 @@ f_finished_remove
 # rsync
 if [ $quiet -eq 1 ];
 	then
-		say "$green $vault"
-		f_rsync > $backup_vault_log/rsync.log
+		say "$green VAULT:$blue $vault"
+
+		date_start_epoch="`date '+%s'`"
+		date_start_human="`date -d @${date_start_epoch} '+%Y-%m-%d %H:%M'`"
+		echo -e "BEGIN:\t$date_start_human" > $backup_vault_log/report.txt
+
+		f_rsync >> $backup_vault_log/rsync.log
+
+		date_finish_epoch="`date '+%s'`"
+		date_finish_human="`date -d @${date_finish_epoch} '+%Y-%m-%d %H:%M'`"
+		echo -e "FINISH:\t$date_finish_human" >> $backup_vault_log/report.txt
+
+		date_delta_epoch=$[${date_finish_epoch} - ${date_start_epoch}]
+		date_delta_human="`date -d @${date_delta_epoch} '+%Y-%m-%d %H:%M'`"
+		echo "DELTA: $date_delta_human ($date_delta_epoch sec)" >> $backup_vault_log/report.txt
 	else
+		say "$green VAULT:$blue $vault"
+
+        date_start_epoch="`date '+%s'`"
+        date_start_human="`date -d @${date_start_epoch} '+%Y-%m-%d %H:%M'`"
+        echo -e "BEGIN:\t$date_start_human" > $backup_vault_log/report.txt
+		say "$green    START:$blue $date_start_human"
+
 		set -o pipefail
-		f_rsync | tee $backup_vault_log/rsync.log
+		f_rsync | tee -a $backup_vault_log/rsync.log
+
+		date_finish_epoch="`date '+%s'`"
+		date_finish_human="`date -d @${date_finish_epoch} '+%Y-%m-%d %H:%M'`"
+		echo -e "FINISH:\t$date_finish_human" >> $backup_vault_log/report.txt
+		say "$green    FINISH:$blue $date_finish_human"
+
+		date_delta_epoch=$[${date_finish_epoch} - ${date_start_epoch}]
+		date_delta_human="`printf '%d day(s) %02d:%02d:%02d\n' $((date_delta_epoch/86400)) $((date_delta_epoch/3600%24)) $((date_delta_epoch/60%60)) $((date_delta_epoch%60))`"
+		echo -e "DELTA:\t$date_delta_human ($date_delta_epoch sec)" >> $backup_vault_log/report.txt
+		say "$green    DELTA:$blue $date_delta_human"
 fi
 rsync_ret=$?
 
