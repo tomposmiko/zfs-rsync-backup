@@ -326,13 +326,10 @@ f_expire(){
 		snap_epoch=`date "+%s" -d "$snap_date"`
 		if [ $snap_epoch -lt $expire_limit ];
 			then
-				# actually remove snapshot
-				# counting from $least_keep_count
-				#say "$green ${snap_name}"
 				if [ $snap_count -lt $snap_all_num ] ;
 					then
 						let snap_count=${snap_count}+1
-						say "$green ${backup_dataset}/${vault}@${snap_name}"
+						say "$green    ${backup_dataset}/${vault}@${snap_name}"
 						zfs destroy ${backup_dataset}/${vault}@${snap_name}
 					else
 						break
