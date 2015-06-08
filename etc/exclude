@@ -1,5 +1,7 @@
+*.lck
+*.lock
+*.tmp
 *~
 .AppleDouble/
 .DS_Store
-.tmp
 __MACOSX
