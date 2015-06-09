@@ -358,9 +358,10 @@ f_lock_create(){
 	lockfile="$backup_vault_log/lock"
 	#pid_now=`pgrep -f "zrb.sh.* $vault"`
 	pid_now=$$
+    basename=`basename $0`
 	if pid_locked=`cat $lockfile 2>/dev/null`;
 		then
-			if ps --no-headers -o comm,args -p $pid_locked |grep -q "zrb.sh.* $vault";
+			if ps --no-headers -o comm,args -p $pid_locked |grep -q "${basename}.* $vault";
 				then
 					say "$red Backup job is already running!"
 					exit 1
