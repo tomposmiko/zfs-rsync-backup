@@ -398,9 +398,9 @@ f_lock_remove(){
 f_check_remote_host(){
     if backup_host=`echo $backup_source | egrep -o ^"[a-z\.-]+"`;
 		then
-			if ! ssh $backup_source 'echo -n' 2>/dev/null
+			if ! ssh $backup_host 'echo -n' 2>/dev/null
 				then
-					say "$red Host $backup_source is not accessible!"
+					say "$red Host $backup_host is not accessible!"
 					exit 1
 			fi
 	fi
