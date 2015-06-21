@@ -395,12 +395,24 @@ f_lock_remove(){
     rm -f $lockfile
 }
 
+f_check_remote_host(){
+    if backup_host=`echo $backup_source | egrep -o ^"[a-z\.-]+"`;
+		then
+			if ! ssh $backup_source 'echo -n' 2>/dev/null
+				then
+					say "$red Host $backup_source is not accessible!"
+					exit 1
+			fi
+	fi
+}
+
 f_rsync() {
     rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
 }
 
 
 ################## doing rsync ####################
+f_check_remote_host
 f_lock_create
 f_finished_remove
 # rsync
