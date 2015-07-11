@@ -1,2 +1,3 @@
+- no snapshot if no data transferred
 - handling failed jobs
 - reporting

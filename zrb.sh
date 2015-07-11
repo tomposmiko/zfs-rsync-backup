@@ -358,9 +358,10 @@ f_lock_create(){
 	lockfile="$backup_vault_log/lock"
 	#pid_now=`pgrep -f "zrb.sh.* $vault"`
 	pid_now=$$
+    basename=`basename $0`
 	if pid_locked=`cat $lockfile 2>/dev/null`;
 		then
-			if ps --no-headers -o comm,args -p $pid_locked |grep -q "zrb.sh.* $vault";
+			if ps --no-headers -o args -p $pid_locked |grep -q "${basename}.* $vault";
 				then
 					say "$red Backup job is already running!"
 					exit 1
@@ -394,12 +395,24 @@ f_lock_remove(){
     rm -f $lockfile
 }
 
+f_check_remote_host(){
+    if backup_host=`echo $backup_source | egrep -o ^"[a-z\.-]+"`;
+		then
+			if ! ssh $backup_host 'echo -n' 2>/dev/null
+				then
+					say "$red Host $backup_host is not accessible!"
+					exit 1
+			fi
+	fi
+}
+
 f_rsync() {
     rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
 }
 
 
 ################## doing rsync ####################
+f_check_remote_host
 f_lock_create
 f_finished_remove
 # rsync
