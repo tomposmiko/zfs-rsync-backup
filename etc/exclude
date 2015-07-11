@@ -1,7 +1,9 @@
+$RECYCLE.BIN
 *.lck
 *.lock
 *.tmp
 *~
 .AppleDouble/
 .DS_Store
+System Volume Information
 __MACOSX
