@@ -396,7 +396,7 @@ f_lock_remove(){
 }
 
 f_check_remote_host(){
-    if backup_host=`echo $backup_source | egrep -o ^"[a-z\.-]+"`;
+    if backup_host=`echo $backup_source | egrep -o ^"[0-9a-z\.-]+"`;
 		then
 			if ! ssh $backup_host 'echo -n' 2>/dev/null
 				then
