@@ -216,7 +216,13 @@ if [ ! -z $vault_to_list ];
 			then
 				zfs list -s name -t all -r $vault_to_list
 			else
-				zfs list -s name -t all -r $backup_dataset/$vault_to_list
+				fs_to_list=`zfs list -o name -s name|grep "^$backup_dataset/.*$vault_to_list.*"`
+				if [ x$fs_to_list == x$backup_dataset ];
+					then
+						say "$red No matching filesystem!"
+					else
+						zfs list -s name -t all -r $fs_to_list
+				fi
 		fi
 		exit 0
 fi
