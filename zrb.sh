@@ -358,7 +358,7 @@ fi
 
 
 # rsync parameters
-rsync_args="-vrltH -z --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --log-file=$backup_vault_log/rsync.log --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
+rsync_args="-vrltH --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --log-file=$backup_vault_log/rsync.log --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
 f_lock_create(){
 	lockfile="$backup_vault_log/lock"
