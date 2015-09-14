@@ -132,7 +132,7 @@ vaults=`mktemp /tmp/vaults.XXXX`
 
 zfs list -H -s name -o name -r $backup_dataset|grep -v ^$backup_dataset$|sed "s@^${backup_dataset}/@@" > $vaults
 echo "BEGIN: `date`"
-parallel -j 2 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
+parallel -j 4 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
 rm $vaults
 echo "END: `date`"
 f_lock_remove

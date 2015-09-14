@@ -1,6 +1,16 @@
 zfs rsync backup
 ----------------
-zrb (*Z*FS *R*sync *B*ackup) is a simple and rough solution to organize snapshots with the 'zfs snapshot' command.
+zrb (*Z*FS *R*sync *B*ackup) is a simple and rough solution to manage backup with the 'rsync' + 'zfs snapshot' commands.
+It is running from a central backup server and works pull mode.
+
+Features:
+- pull mode backup
+- resuming backup job ot of box
+- excluding via rsync exclude file
+- optionally different pool/dataset name
+- various expiring rules
+- parallel jobs with configurable process number
+- command to add and list vaults
 
 USAGE
 =====
