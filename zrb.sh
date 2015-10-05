@@ -357,6 +357,9 @@ fi
 ################ expiring only ##################
 
 
+# remove old log file
+rm -f $backup_vault_log/rsync.log
+
 # rsync parameters
 rsync_args="-vrltH --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --log-file=$backup_vault_log/rsync.log --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
