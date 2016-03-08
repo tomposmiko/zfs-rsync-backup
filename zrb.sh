@@ -155,6 +155,7 @@ if echo $global_config_dir |grep -q ^/;
 	then
 		global_exclude="$global_config_dir/exclude"
 		global_expire="$global_config_dir/expire"
+		global_placeholder="$global_config_dir/placeholder"
 	else
 		say "$red configdir does not start with /"
 		exit 1
@@ -307,6 +308,21 @@ if [ -f $backup_vault_conf/exclude ];
 fi
 ################ global exclude file ######################
 
+f_check_placeholder(){
+	if backup_host=`echo $backup_source | egrep -o ^"/"`;
+		then
+			file_placeholder=""
+			[ -f $global_placeholder ] && file_placeholder=$(cat $global_placeholder)
+			[ -f $backup_vault_conf/placeholder ] && file_placeholder=$(cat $backup_vault_conf/placeholder)
+			if [ ! -e $backup_source/$file_placeholder ];
+				then
+					say "$red Placeholder file defined but does not exist: $backup_source/$file_placeholder !"
+					say "$red Filesystem is not mounted?"
+					exit 1
+			fi
+	fi
+}
+
 
 f_expire(){
 	if [ -f $global_expire ];
@@ -422,6 +438,7 @@ f_rsync() {
 
 ################## doing rsync ####################
 f_check_remote_host
+f_check_placeholder
 f_lock_create
 f_finished_remove
 # rsync
