@@ -213,12 +213,14 @@ fi
 ################## snapshots listing of vault #######################
 if [ ! -z $vault_to_list ];
 	then
+		# if the parameter is full path
 		if echo $vault_to_list | grep -q ^$backup_dataset;
 			then
 				zfs list -s name -t all -r $vault_to_list
 			else
-				fs_to_list=`zfs list -o name -s name|grep "^$backup_dataset/.*$vault_to_list.*"`
-				if [ x$fs_to_list == x$backup_dataset ];
+				# parameter is NOT full path, must be a matched string, can be multiple paths
+				fs_to_list=`zfs list -o name -s name | grep "^$backup_dataset/.*$vault_to_list"`
+				if [ x"$fs_to_list" == x"$backup_dataset" ];
 					then
 						say "$red No matching filesystem!"
 					else
