@@ -314,7 +314,7 @@ f_check_placeholder(){
 	if backup_host=`echo $backup_source | egrep -o ^"/"`;
 		then
 			file_placeholder=""
-			[ -f $global_placeholder ] && file_placeholder=$(cat $global_placeholder)
+			[ -e $global_placeholder ] && file_placeholder=$(cat $global_placeholder)
 			[ -f $backup_vault_conf/placeholder ] && file_placeholder=$(cat $backup_vault_conf/placeholder)
 			if [ ! -e $backup_source/$file_placeholder ];
 				then
