@@ -281,6 +281,18 @@ fi
 ############## check if backup is disabled for this vault ###################
 
 
+
+f_check_email_notify_address(){
+    if [ -f $global_notify_address ];
+        then
+            email_notify_address=$(cat $global_notify_address)
+        else
+            email_notify_address="root"
+    fi
+}
+f_check_email_notify_address
+
+
 ############## initializing backup source ###############
 # path of the source
 # Eg.: /mnt/source/dir
@@ -318,15 +330,6 @@ if [ -f $backup_vault_conf/exclude ];
 		rsync_exclude_file="--exclude-from=$backup_vault_conf/exclude"
 fi
 ################ global exclude file ######################
-
-f_check_notify_email(){
-	if [ -f $global_notify_address ];
-		then
-			email_notify_address=$(cat $global_notify_address)
-		else
-			email_notify_address="root"
-	fi
-}
 
 f_check_placeholder(){
 	if backup_host=`echo $backup_source | egrep -o ^"/"`;
