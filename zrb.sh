@@ -16,9 +16,9 @@ quiet=1
 interactive=0
 
 if /usr/bin/tty > /dev/null;
-    then
-        quiet=0
-        interactive=1
+	then
+		quiet=0
+		interactive=1
 fi
 
 
@@ -62,14 +62,14 @@ f_usage(){
 	echo " $0 -a SOURCE -v VAULT"
 	echo " $0 -l VAULT"
 	echo
-	echo "	-p|--prefix        <prefix>      [zrb]"
-	echo "	-v|--vault         <vault>"
-	echo "	-f|--freq          <freq types>  hourly,[daily],weekly,monthly (comma separated list)"
-	echo "	-g|--conffir       <dir path>"
-	echo "	-x|--exclude-file  <file>        path to shared exclude file"
-	echo "	-e|--expire	   <goal>        yes | [no] | only"
-	echo "	-a|--add           <source>      create vault and add source"
-	echo "	-l|--list          <vault>       display vault"
+	echo "	-p|--prefix		<prefix>	  [zrb]"
+	echo "	-v|--vault		 <vault>"
+	echo "	-f|--freq		  <freq types>  hourly,[daily],weekly,monthly (comma separated list)"
+	echo "	-g|--conffir	   <dir path>"
+	echo "	-x|--exclude-file  <file>		path to shared exclude file"
+	echo "	-e|--expire	   <goal>		yes | [no] | only"
+	echo "	-a|--add		   <source>	  create vault and add source"
+	echo "	-l|--list		  <vault>	   display vault"
 	echo "	-q|--quiet"
 	echo
 	exit 1
@@ -174,6 +174,16 @@ backup_vault_dest="/$backup_dataset/$vault/data"
 backup_vault_conf="/$backup_dataset/$vault/config"
 backup_vault_log="/$backup_dataset/$vault/log"
 
+f_check_email_notify_address(){
+	if [ -f $global_notify_address ];
+		then
+			email_notify_address=$(cat $global_notify_address)
+		else
+			email_notify_address="root"
+	fi
+}
+f_check_email_notify_address
+
 ########################## initializing vault #########################
 if [ ! -z $data_source ];
 	then
@@ -181,14 +191,14 @@ if [ ! -z $data_source ];
 		if [ -d /$backup_dataset/$vault ]; then
 			say "$red Cannot add vault!"
 			say "$red Existing directory: /$backup_dataset/$vault !"
-	        exit 1
+			exit 1
 		fi
 
 		# check for zfs dataset of vault
 		if zfs list -s name $backup_dataset/$vault > /dev/null 2>&1; then
 			say "$red Cannot add vault!"
-        	say "$red Existing dataset: $backup_dataset/$vault !"
-        	exit 1
+			say "$red Existing dataset: $backup_dataset/$vault !"
+			exit 1
 		fi
 		if zfs create $backup_dataset/$vault;
 			then
@@ -281,22 +291,10 @@ fi
 ############## check if backup is disabled for this vault ###################
 
 
-
-f_check_email_notify_address(){
-    if [ -f $global_notify_address ];
-        then
-            email_notify_address=$(cat $global_notify_address)
-        else
-            email_notify_address="root"
-    fi
-}
-f_check_email_notify_address
-
-
 ############## initializing backup source ###############
 # path of the source
 # Eg.: /mnt/source/dir
-#      host:/mnt/source/dir
+#	  host:/mnt/source/dir
 #
 if [ -f $backup_vault_conf/source ];
 	then
@@ -376,7 +374,7 @@ f_expire(){
 				if [ $snap_count -lt $snap_all_num ] ;
 					then
 						let snap_count=${snap_count}+1
-						say "$green    ${backup_dataset}/${vault}@${snap_name}"
+						say "$green	${backup_dataset}/${vault}@${snap_name}"
 						zfs destroy ${backup_dataset}/${vault}@${snap_name}
 					else
 						break
@@ -408,7 +406,7 @@ f_lock_create(){
 	lockfile="$backup_vault_log/lock"
 	#pid_now=`pgrep -f "zrb.sh.* $vault"`
 	pid_now=$$
-    basename=`basename $0`
+	basename=`basename $0`
 	if pid_locked=`cat $lockfile 2>/dev/null`;
 		then
 			if ps --no-headers -o args -p $pid_locked |grep -q "${basename}.* $vault";
@@ -426,8 +424,8 @@ f_lock_create(){
 
 f_finished_create(){
 	if [ $rsync_ret -eq 0 ];
-	    then
-    	    touch /$backup_dataset/$vault/FINISHED
+		then
+			touch /$backup_dataset/$vault/FINISHED
 	fi
 }
 
@@ -444,11 +442,11 @@ f_finished_remove(){
 
 
 f_lock_remove(){
-    rm -f $lockfile
+	rm -f $lockfile
 }
 
 f_check_remote_host(){
-    if backup_host=`echo $backup_source | egrep -o ^"[0-9a-z@\.-]+"`;
+	if backup_host=`echo $backup_source | egrep -o ^"[0-9a-z@\.-]+"`;
 		then
 			if ! ssh $backup_host 'echo -n' 2>/dev/null
 				then
@@ -460,7 +458,7 @@ f_check_remote_host(){
 }
 
 f_rsync() {
-    rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
+	rsync-novanished.sh $rsync_args $backup_source/ $backup_vault_dest/
 }
 
 
@@ -480,7 +478,7 @@ if [ $quiet -eq 1 ];
 	then
 		f_rsync > /dev/null
 	else
-		say "$green    START:$blue $date_start_human"
+		say "$green	START:$blue $date_start_human"
 		f_rsync
 fi
 rsync_ret=$?
@@ -490,7 +488,7 @@ date_finish_human="`date -d @${date_finish_epoch} '+%Y-%m-%d %H:%M'`"
 echo -e "FINISH:\t$date_finish_human" >> $backup_vault_log/report.txt
 if [ ! $quiet -eq 1 ];
 	then
-		say "$green    FINISH:$blue $date_finish_human"
+		say "$green	FINISH:$blue $date_finish_human"
 fi
 
 duetime_epoch=$[${date_finish_epoch} - ${date_start_epoch}]
@@ -498,7 +496,7 @@ duetime_human="`printf '%d day(s) %02d:%02d:%02d\n' $((duetime_epoch/86400)) $((
 echo "DELTA: $duetime_human ($duetime_epoch sec)" >> $backup_vault_log/report.txt
 if [ ! $quiet -eq 1 ];
 	then
-		say "$green    DELTA:$blue $duetime_human"
+		say "$green	DELTA:$blue $duetime_human"
 fi
 
 f_lock_remove
@@ -515,8 +513,8 @@ f_finished_create
 for freq_type in $freq_list;do
 	zfs snap $backup_dataset/$vault@${prefix}_${freq_type}_${date}
 	if [ $expire == yes ];
-    	then
-            f_expire
+		then
+			f_expire
 	fi
 done
 ################# doing snapshot & expiring ##############
