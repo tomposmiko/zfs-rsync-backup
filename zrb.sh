@@ -502,7 +502,7 @@ fi
 f_lock_remove
 if [ ! $rsync_ret -eq 0 ];
 	then
-		echo "rsync exited with non-zero status code!" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+		echo "rsync exited with non-zero status code: $rsync_ret !" | mail -s "$HOSTNAME zrb.sh ERROR: $vault" $email_notify_address
 		say "$red rsync exited with non-zero status code!"
 		exit 1
 fi
