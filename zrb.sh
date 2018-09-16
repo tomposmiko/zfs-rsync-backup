@@ -35,7 +35,7 @@ if [[ $interactive -eq 1 ]]
 		nocolor="\e[0m"
    else
 		# do nothing
-		say() { true; }
+		say() { echo -e $1; }
 fi
 
 
