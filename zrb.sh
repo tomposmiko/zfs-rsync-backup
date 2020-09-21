@@ -3,7 +3,7 @@
 
 # default variables
 pool="tank"
-backup_dataset="$pool/backup"
+backup_dataset="$pool/zrb"
 PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
