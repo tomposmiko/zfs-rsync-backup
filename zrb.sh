@@ -315,7 +315,7 @@ fi
 ############### exclude file for rsync ##################
 
 
-################ global exclude file ######################
+################ vault exclude file ######################
 if [ -f $backup_vault_conf/exclude ];
 	then
 		if [ ! -z $backup_exclude_param ];
@@ -327,7 +327,24 @@ if [ -f $backup_vault_conf/exclude ];
 		fi
 		rsync_exclude_file="--exclude-from=$backup_vault_conf/exclude"
 fi
-################ global exclude file ######################
+################ vault exclude file ######################
+
+################ vault notification file ######################
+if [ -f $backup_vault_conf/notify ];
+	then
+		vault_notify_address=$(cat $backup_vault_conf/notify)
+		if [ ! -z $vault_notify_address ];
+			then
+				if ! echo $vault_notify_address | grep -q @;
+					then
+						say "red $vault_notify_address is not a valid email address"
+						exit 1
+				fi
+				email_notify_address="$email_notify_address,$vault_notify_address"
+		fi
+fi
+################ vault notification file ######################
+
 
 f_check_placeholder(){
 	if backup_host=`echo $backup_source | egrep -o ^"/"`;
