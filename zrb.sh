@@ -62,14 +62,14 @@ f_usage() {
   echo " $0 -a SOURCE -v VAULT"
   echo " $0 -l VAULT"
   echo
-  echo "  -p|--prefix    <prefix>    [zrb]"
-  echo "  -v|--vault     <vault>"
-  echo "  -f|--freq      <freq types>  hourly,[daily],weekly,monthly (comma separated list)"
-  echo "  -g|--conffir     <dir path>"
-  echo "  -x|--exclude-file  <file>    path to shared exclude file"
-  echo "  -e|--expire     <goal>    yes | [no] | only"
-  echo "  -a|--add       <source>    create vault and add source"
-  echo "  -l|--list      <vault>     display vault"
+  echo "  -p|--prefix <prefix>      [zrb]"
+  echo "  -v|--vault <vault>"
+  echo "  -f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
+  echo "  -g|--conffir <dir path>"
+  echo "  -x|--exclude-file <file>  path to shared exclude file"
+  echo "  -e|--expire <goal>        yes | [no] | only"
+  echo "  -a|--add <source>         create vault and add source"
+  echo "  -l|--list <vault>         display vault"
   echo "  -q|--quiet"
   echo
   exit 1
