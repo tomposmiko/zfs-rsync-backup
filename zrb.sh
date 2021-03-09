@@ -7,7 +7,7 @@ backup_dataset="$pool/zrb"
 PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
-global_config_dir="/$pool/etc/zrb"
+global_config_dir="/etc/zrb"
 
 prefix=zrb
 freq_list=daily
