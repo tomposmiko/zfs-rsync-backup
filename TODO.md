@@ -1,3 +1,4 @@
-- no snapshot if no data transferred
-- handling failed jobs
-- reporting
+- No snapshot if no data transferred
+- Handling failed jobs
+- Reporting
+- Run rsync only after creating remote snapshot (pre-run)
