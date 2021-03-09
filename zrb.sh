@@ -481,7 +481,8 @@ if backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+");
 }
 
 f_rsync() {
-  rsync-novanished.sh "$rsync_args" "$backup_source/" "$backup_vault_dest/"
+  # shellcheck disable=SC2086
+  rsync-novanished.sh $rsync_args "$backup_source/" "$backup_vault_dest/"
 }
 
 
