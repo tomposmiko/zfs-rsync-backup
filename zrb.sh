@@ -17,8 +17,8 @@ interactive=0
 
 if /usr/bin/tty > /dev/null;
   then
-    quiet=0
-    interactive=1
+    export quiet=0
+    export interactive=1
 fi
 
 
@@ -168,12 +168,12 @@ fi
 
 if [ -f "$global_config_dir/backup_dataset" ];
   then
-    backup_dataset=$(cat "$global_config_dir/backup_dataset")
+    export backup_dataset=$(cat "$global_config_dir/backup_dataset")
 fi
 
-backup_vault_dest="/$backup_dataset/$vault/data"
-backup_vault_conf="/$backup_dataset/$vault/config"
-backup_vault_log="/$backup_dataset/$vault/log"
+export backup_vault_dest="/$backup_dataset/$vault/data"
+export backup_vault_conf="/$backup_dataset/$vault/config"
+export backup_vault_log="/$backup_dataset/$vault/log"
 
 f_check_email_notify_address() {
   if [ -f "$global_notify_address" ];
@@ -299,14 +299,13 @@ fi
 #
 if [ -f "$backup_vault_conf/source" ];
   then
-    backup_source=$(cat "$backup_vault_conf/source")
+    export backup_source=$(cat "$backup_vault_conf/source")
   else
     echo "Non-existent source file: $backup_vault_conf/source !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
     say "$red Non-existent source file: $backup_vault_conf/source !"
     exit 1
 fi
 ############## initializing backup source ###############
-
 
 ############### exclude file for rsync ##################
 if [ -n "$backup_exclude_param" ];
@@ -346,9 +345,9 @@ if [ -f "$backup_vault_conf/notify" ];
 fi
 ################ vault notification file ######################
 
-
 f_check_placeholder() {
-        if backup_host=$(echo "$backup_source" | grep -Eo ^"/");
+  # check if there is a specific file available to make sure, fs is mounted if its a network share (nfs, samba etc.)
+  if echo "$backup_source" | grep -q -Eo ^"/";
     then
       file_placeholder=""
       [ -e "$global_placeholder" ] && file_placeholder=$(cat "$global_placeholder")
@@ -363,6 +362,12 @@ f_check_placeholder() {
   fi
 }
 
+################ pre-run script ######################
+#if [ -f "$backup_vault_conf/pre-run.sh" ];
+#  then
+#    bash $backup_vault_conf/pre-run.sh
+#fi
+################ pre-run script ######################
 
 f_expire() {
   if [ -f "$global_expire" ];
@@ -387,7 +392,7 @@ f_expire() {
   snap_min_count="least_keep_count_${freq_type}"
   snap_count=${!snap_min_count}
   # shellcheck disable=SC2013 disable=SC2002
-  for snap_name in $(cat "$snap_list" | grep "$freq_type"); do
+  for snap_name in $(cat "$snap_list" | grep "$freq_type"); do ##CAT ABUSE
     # shellcheck disable=SC2001
     snap_date=$(echo "$snap_name" | sed "s,\(${prefix}\)_\(${freq_type}\)_\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)--\([0-9][0-9]\)-\([0-9][0-9]\),\3 \4:\5,")
     snap_epoch=$(date "+%s" -d "$snap_date")
@@ -469,8 +474,14 @@ f_lock_remove() {
 }
 
 f_check_remote_host() {
-if backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+");
+  if echo "$backup_source" | grep -q -Eo ^"[0-9a-z@\.-]+";
     then
+      export backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+")
+  fi
+
+  if [ -n $backup_host ];
+    then
+      #echo "DEBUG: backup_host - f_check_remote_host: $backup_host"
       if ! ssh "$backup_host" 'echo -n' 2>/dev/null
         then
           echo "Host $backup_host is not accessible!" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
@@ -480,18 +491,38 @@ if backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+");
   fi
 }
 
+f_pre_run_script() {
+  #echo "DEBUG: backup_host - f_pre_run_script: $backup_host"
+  pre_run_script="/$backup_dataset/$vault/config/pre-run.sh"
+  if [ -f "$pre_run_script" ];
+    then
+      bash $pre_run_script
+  fi
+}
+
+f_post_run_script() {
+  #echo "DEBUG: backup_host - f_post_run_script: $backup_host"
+  post_run_script="/$backup_dataset/$vault/config/post-run.sh"
+  if [ -f "$post_run_script" ];
+    then
+      bash $post_run_script
+  fi
+}
+
 f_rsync() {
   # shellcheck disable=SC2086
   rsync-novanished.sh $rsync_args "$backup_source/" "$backup_vault_dest/"
 }
 
-
 ################## doing rsync ####################
 f_check_remote_host
 f_check_placeholder
 f_lock_create
+#echo "DEBUG: backup_host - before f_pre_run_script: $backup_host"
+f_pre_run_script
 f_finished_remove
-# rsync
+
+############################### rsync ################################
 say "$green VAULT:$blue $vault"
 
 date_start_epoch=$(date '+%s')
@@ -506,6 +537,9 @@ if [ $quiet -eq 1 ];
     f_rsync
 fi
 rsync_ret=$?
+############################### rsync ################################
+
+f_post_run_script
 
 date_finish_epoch=$(date '+%s')
 date_finish_human=$(date -d "@$date_finish_epoch" '+%Y-%m-%d %H:%M')
