@@ -1,15 +1,21 @@
 #!/bin/bash
-# set -x
+#set -x
+
+# prepare backup user environment if system user already created
+# create user zrb@localhost identified by '<pw>';
+# grant SELECT, SHOW VIEW, LOCK TABLES, RELOAD, REPLICATION CLIENT, PROCESS on *.* to zrb@localhost;
+# echo -e "[client]\nuser=zrb\npassword=<pw>" > /home/backup-zrb/.my.cnf
+
 
 # default variables
 pool="tank"
-backup_dataset="$pool/zrb"
+backup_dataset="$pool/mrb"
 PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
-global_config_dir="/etc/zrb"
+global_config_dir="/etc/mrb"
 
-prefix=zrb
+prefix=mrb
 freq_list=daily
 expire=no
 quiet=1
@@ -62,11 +68,11 @@ f_usage() {
   echo " $0 -a SOURCE -v VAULT"
   echo " $0 -l VAULT"
   echo
-  echo "  -p|--prefix <prefix>      [zrb]"
+  echo "  -p|--prefix <prefix>      [mrb]"
   echo "  -v|--vault <vault>"
   echo "  -f|--freq <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
   echo "  -g|--conffir <dir path>"
-  echo "  -x|--exclude-file <file>  path to shared exclude file"
+  #echo "  -x|--exclude-file <file>  path to shared exclude file"
   echo "  -e|--expire <goal>        yes | [no] | only"
   echo "  -a|--add <source>         create vault and add source"
   echo "  -l|--list <vault>         display vault"
@@ -116,12 +122,12 @@ while [ "$#" -gt "0" ]; do
     shift 2
   ;;
 
-  -x|--exclude-file)
-    PARAM=$2
-    f_check_switch_param "$PARAM"
-    backup_exclude_param="$PARAM"
-    shift 2
-  ;;
+  #-x|--exclude-file)
+  #  PARAM=$2
+  #  f_check_switch_param "$PARAM"
+  #  backup_exclude_param="$PARAM"
+  #  shift 2
+  #;;
 
   -a|--add-vault)
     PARAM=$2
@@ -156,10 +162,10 @@ if echo "$global_config_dir" | grep -q ^/;
   then
     global_exclude="$global_config_dir/exclude"
     global_expire="$global_config_dir/expire"
-    global_placeholder="$global_config_dir/placeholder"
+    #global_placeholder="$global_config_dir/placeholder"
     global_notify_address="$global_config_dir/notify_address"
   else
-    echo "configdir does not start with /" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+    echo "configdir does not start with /" | mail -s "$0 ERROR: $vault" "$email_notify_address"
     say "$red configdir does not start with /"
     exit 1
 fi
@@ -235,7 +241,7 @@ if [ -n "$vault_to_list" ];
         fs_to_list=$(zfs list -o name -s name | grep "^$backup_dataset/.*$vault_to_list")
         if [ x"$fs_to_list" == x"$backup_dataset" ];
           then
-            echo "No matching filesystem!" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+            echo "No matching filesystem!" | mail -s "$0 ERROR: $vault" $email_notify_address
             say "$red No matching filesystem!"
           else
             zfs list -s name -t all -r "$fs_to_list"
@@ -249,35 +255,35 @@ fi
 ################## checks for entries in vault ######################
 # check for zfs dataset of vault
 if ! zfs list -s name "$backup_dataset/$vault" > /dev/null 2>&1; then
-    echo "Non-existent dataset for vault: $backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent dataset for vault: $backup_dataset/$vault !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent dataset for vault: $backup_dataset/$vault !"
     exit 1
 fi
 
 # check for directory of vault
 if [ ! -d "/$backup_dataset/$vault" ]; then
-    echo "Non-existent vault directory: /$backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent vault directory: /$backup_dataset/$vault !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent vault directory: /$backup_dataset/$vault !"
     exit 1
 fi
 
 # check for config directory of vault
 if [ ! -d "$backup_vault_conf" ]; then
-    echo "Non-existent config directory: $backup_vault_conf !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent config directory: $backup_vault_conf !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent config directory: $backup_vault_conf !"
     exit 1
 fi
 
 # check for data directory of vault
 if [ ! -d "$backup_vault_dest" ]; then
-    echo "Non-existent rsync destination directory: $backup_vault_dest !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent rsync destination directory: $backup_vault_dest !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent rsync destination directory: $backup_vault_dest !"
     exit 1
 fi
 
 # check for log directory of vault
 if [ ! -d "$backup_vault_log" ]; then
-    echo "Non-existent rsync destination directory: $backup_vault_log !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent rsync destination directory: $backup_vault_log !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent rsync destination directory: $backup_vault_log !"
     exit 1
 fi
@@ -301,33 +307,33 @@ if [ -f "$backup_vault_conf/source" ];
   then
     export backup_source=$(cat "$backup_vault_conf/source")
   else
-    echo "Non-existent source file: $backup_vault_conf/source !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+    echo "Non-existent source file: $backup_vault_conf/source !" | mail -s "$0 ERROR: $vault" $email_notify_address
     say "$red Non-existent source file: $backup_vault_conf/source !"
     exit 1
 fi
 ############## initializing backup source ###############
 
-############### exclude file for rsync ##################
-if [ -n "$backup_exclude_param" ];
-  then
-    rsync_exclude_param="--exclude-from=$backup_exclude_param"
-fi
-############### exclude file for rsync ##################
+################ exclude file for rsync ##################
+#if [ -n "$backup_exclude_param" ];
+#  then
+#    rsync_exclude_param="--exclude-from=$backup_exclude_param"
+#fi
+################ exclude file for rsync ##################
 
 
-################ vault exclude file ######################
-if [ -f "$backup_vault_conf/exclude" ];
-  then
-    if [ -n "$backup_exclude_param" ];
-      then
-        say "$red The switch '--exclude-file' and the 'vault specific exclude' file are mutually exclusive!"
-        say "$red switch: $backup_exclude_param"
-        say "$red exclude file: $backup_vault_conf/exclude"
-        exit 1
-    fi
-    rsync_exclude_file="--exclude-from=$backup_vault_conf/exclude"
-fi
-################ vault exclude file ######################
+################# vault exclude file ######################
+#if [ -f "$backup_vault_conf/exclude" ];
+#  then
+#    if [ -n "$backup_exclude_param" ];
+#      then
+#        say "$red The switch '--exclude-file' and the 'vault specific exclude' file are mutually exclusive!"
+#        say "$red switch: $backup_exclude_param"
+#        say "$red exclude file: $backup_vault_conf/exclude"
+#        exit 1
+#    fi
+#    rsync_exclude_file="--exclude-from=$backup_vault_conf/exclude"
+#fi
+################# vault exclude file ######################
 
 ################ vault notification file ######################
 if [ -f "$backup_vault_conf/notify" ];
@@ -345,22 +351,22 @@ if [ -f "$backup_vault_conf/notify" ];
 fi
 ################ vault notification file ######################
 
-f_check_placeholder() {
-  # check if there is a specific file available to make sure, fs is mounted if its a network share (nfs, samba etc.)
-  if echo "$backup_source" | grep -q -Eo ^"/";
-    then
-      file_placeholder=""
-      [ -e "$global_placeholder" ] && file_placeholder=$(cat "$global_placeholder")
-      [ -f "$backup_vault_conf/placeholder" ] && file_placeholder=$(cat "$backup_vault_conf/placeholder")
-      if [ ! -e "$backup_source/$file_placeholder" ];
-        then
-          echo "Placeholder file defined but does not exist: $backup_source/$file_placeholder !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
-          say "$red Placeholder file defined but does not exist: $backup_source/$file_placeholder !"
-          say "$red Filesystem is not mounted?"
-          exit 1
-      fi
-  fi
-}
+#f_check_placeholder() {
+#  # check if there is a specific file available to make sure, fs is mounted if its a network share (nfs, samba etc.)
+#  if echo "$backup_source" | grep -q -Eo ^"/";
+#    then
+#      file_placeholder=""
+#      [ -e "$global_placeholder" ] && file_placeholder=$(cat "$global_placeholder")
+#      [ -f "$backup_vault_conf/placeholder" ] && file_placeholder=$(cat "$backup_vault_conf/placeholder")
+#      if [ ! -e "$backup_source/$file_placeholder" ];
+#        then
+#          echo "Placeholder file defined but does not exist: $backup_source/$file_placeholder !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+#          say "$red Placeholder file defined but does not exist: $backup_source/$file_placeholder !"
+#          say "$red Filesystem is not mounted?"
+#          exit 1
+#      fi
+#  fi
+#}
 
 ################ pre-run script ######################
 #if [ -f "$backup_vault_conf/pre-run.sh" ];
@@ -375,7 +381,7 @@ f_expire() {
       # shellcheck disable=SC1090
       . "$global_expire"
     else
-      echo "No default expire file: $global_expire !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+      echo "No default expire file: $global_expire !" | mail -s "$0 ERROR: $vault" "$email_notify_address"
       say "$red No default expire file: $global_expire !"
       exit 1
   fi
@@ -424,10 +430,10 @@ fi
 
 
 # remove old log file
-rm -f "$backup_vault_log/rsync.log"
+#rm -f "$backup_vault_log/rsync.log"
 
 # rsync parameters
-rsync_args="-vrltH --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --log-file=$backup_vault_log/rsync.log --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
+#rsync_args="-vrltH --delete --delete-excluded -pgo --stats -h -D --numeric-ids --inplace --log-file=$backup_vault_log/rsync.log --exclude-from=$global_exclude $rsync_exclude_param $rsync_exclude_file"
 
 f_lock_create() {
   lockfile="$backup_vault_log/lock"
@@ -439,7 +445,7 @@ f_lock_create() {
       # shellcheck disable=SC2009
       if ps --no-headers -o args -p "$pid_locked" | grep -q "${basename}.* $vault";
         then
-          echo "Backup job is already running!" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+          echo "Backup job is already running!" | mail -s "$0 ERROR: $vault" "$email_notify_address"
           say "$red Backup job is already running!"
           exit 1
         else
@@ -451,7 +457,7 @@ f_lock_create() {
 }
 
 f_finished_create() {
-  if [ "$rsync_ret" -eq 0 ];
+  if [ "$mysqldump_ret" -eq 0 ];
     then
       touch "/$backup_dataset/$vault/FINISHED"
   fi
@@ -463,7 +469,7 @@ f_finished_remove() {
     then
       rm -f "$file_finished"
     else
-      echo "Last backup was not succesful. Continuing from the last point." | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+      echo "Last backup was not succesful. Continuing from the last point." | mail -s "$0 ERROR: $vault" "$email_notify_address"
       say "$red Last backup was not succesful. Continuing from the last point."
   fi
 }
@@ -482,9 +488,9 @@ f_check_remote_host() {
   if [ -n $backup_host ];
     then
       #echo "DEBUG: backup_host - f_check_remote_host: $backup_host"
-      if ! ssh ${ssh_args[@]} "$backup_host" 'echo -n' 2>/dev/null
+      if ! ssh $ssh_args "$backup_host" 'echo -n' 2>/dev/null
         then
-          echo "Host $backup_host is not accessible!" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
+          echo "Host $backup_host is not accessible!" | mail -s "$0 ERROR: $vault" "$email_notify_address"
           say "$red Host $backup_host is not accessible!"
           exit 1
       fi
@@ -517,28 +523,28 @@ f_ssh_config() {
   fi
 }
 
-f_rsync() {
+f_mysql_list_dbs() {
+  ssh ${ssh_args} ${backup_host} 'mysql -Ne "SHOW DATABASES" | grep -Ev "(Database|information_schema|performance_schema|sys)"'
+}
+
+f_mysqldump() {
   # shellcheck disable=SC2086
   #rsync-novanished.sh $rsync_args "$backup_source/" "$backup_vault_dest/"
-  #rsync-novanished.sh ${rsync_args[@]} "$backup_source/" "$backup_vault_dest/"
-  ssh_config="/$backup_dataset/$vault/config/ssh"
-  if [ -f "$ssh_config" ];
-    then
-      rsync --rsync-path 'sudo rsync' -e "ssh -F $ssh_config" ${rsync_args[@]} "$backup_source/" "$backup_vault_dest/"
-    else
-      rsync --rsync-path 'sudo rsync' ${rsync_args[@]} "$backup_source/" "$backup_vault_dest/"
-  fi
-  e=$?
-  if [ $e -eq 24 -o $e -eq 23 ]; then
-    return 0
-  fi
-  return $e
+  #alias c_dumper='ssh ${REMOTE_USER}@${REMOTE_HOST} "mysqldump -R --single-transaction --quick --skip-lock-tables"'
+  ssh ${ssh_args} ${backup_host} "mysqldump -R --single-transaction --quick --skip-lock-tables $1" > "$backup_vault_dest"/"$1.mysql"
+}
+
+f_dumpall() {
+  for db in $(f_mysql_list_dbs);do
+    echo ${db}
+    f_mysqldump ${db}
+  done
 }
 
 ################## doing rsync ####################
 f_ssh_config
 f_check_remote_host
-f_check_placeholder
+#f_check_placeholder
 f_lock_create
 #echo "DEBUG: backup_host - before f_pre_run_script: $backup_host"
 f_pre_run_script
@@ -553,12 +559,12 @@ echo -e "BEGIN:\t$date_start_human" > "$backup_vault_log/report.txt"
 
 if [ $quiet -eq 1 ];
   then
-    f_rsync > /dev/null
+    f_dumpall > /dev/null
   else
     say "$green  START:$blue $date_start_human"
-    f_rsync
+    f_dumpall
 fi
-rsync_ret=$?
+mysqldump_ret=$?
 ############################### rsync ################################
 
 f_post_run_script
@@ -580,10 +586,10 @@ if [ ! $quiet -eq 1 ];
 fi
 
 f_lock_remove
-if [ ! $rsync_ret -eq 0 ];
+if [ ! $mysqldump_ret -eq 0 ];
   then
-    echo "rsync exited with non-zero status code: $rsync_ret !" | mail -s "$HOSTNAME zrb.sh ERROR: $vault" "$email_notify_address"
-    say "$red rsync exited with non-zero status code!"
+    echo "MySQL dump exited with non-zero status code: $mysqldump_ret !" | mail -s "$HOSTNAME $0 ERROR: $vault" "$email_notify_address"
+    say "$red MySQL dump exited with non-zero status code!"
     exit 1
 fi
 f_finished_create

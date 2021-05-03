@@ -6,12 +6,12 @@ export PATH="$HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 
 # default variables
 pool="tank"
-backup_dataset="$pool/zrb"
+backup_dataset="$pool/mrb"
 PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 date=$(date "+%Y-%m-%d--%H-%M")
 
-global_config_dir="/etc/zrb"
-global_exclude="$global_config_dir/exclude"
+global_config_dir="/etc/mrb"
+#global_exclude="$global_config_dir/exclude"
 global_expire="$global_config_dir/expire"
 
 quiet=1
@@ -132,9 +132,9 @@ f_lock_remove(){
 f_lock_create
 vaults=`mktemp /tmp/vaults.XXXX`
 
-zfs list -H -s name -o name -r $backup_dataset | grep zrb$ | sed "s@^${backup_dataset}/@@" > $vaults
+zfs list -H -s name -o name -r $backup_dataset | grep mrb$ | sed "s@^${backup_dataset}/@@" > $vaults
 echo "BEGIN: `date`"
-parallel -j 4 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
+parallel -j 4 -a $vaults mrb.sh -e yes -f $freq_list -v {1}
 rm $vaults
 echo "END: `date`"
 f_lock_remove

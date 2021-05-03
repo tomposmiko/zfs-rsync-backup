@@ -1,3 +1,7 @@
+- lvm snapshot
+- glusterfs-t hogyan menteni?
+- mrb view-k hogyan kellene menteni, jo a -R?
+- hibakezeles
 - No snapshot if no data transferred
 - Handling failed jobs
 - Reporting
