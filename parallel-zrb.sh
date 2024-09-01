@@ -94,7 +94,11 @@ f_list_vaults() {
         exit 1
     fi
 
-    zfs list -H -s name -o name -r "$BACKUP_DATASET" | grep -v "${BACKUP_DATASET}$" | sed "s@^${BACKUP_DATASET}/@@"
+    local dataset
+
+    for dataset in $( zfs list -r -H -s name -o name "$BACKUP_DATASET" | grep -v "$BACKUP_DATASET$" ); do
+        zfs list -H -s name -o name -r "$dataset" | grep -q "${dataset}/" || echo "$dataset";
+    done | sed "s@^${BACKUP_DATASET}/@@"
 }
 
 f_lock_create() {
