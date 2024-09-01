@@ -12,13 +12,14 @@ export GLOBAL_CONFIG_DIR="/etc/zrb"
 export GLOBAL_EXCLUDE_RULE="$GLOBAL_CONFIG_DIR/exclude"
 export GLOBAL_EXPIRE_RULE="$GLOBAL_CONFIG_DIR/expire"
 export FREQ_LIST="daily"
+export PARALLEL_JOBS="4"
 export LOCK_FILE="/var/run/${SCRIPT_BASENAME}.lock"
 export VAULTS_FILE="/tmp/vaults.txt"
 
 export SCRIPT_BASENAME="${0##*/}"
 
 f_check_switch_param() {
-    if ( echo x"$1" | grep -q ^x$ ); then
+    if ( ! echo "$1" | grep -q "^[A-Za-z0-9]" ); then
         f_say "$C_RED Missing argument!"
 
         exit 1
@@ -69,6 +70,15 @@ f_process_args() {
                 shift 2
             ;;
 
+            -j|--jobs)
+                PARAM=$2
+                f_check_switch_param "$PARAM"
+
+                PARALLEL_JOBS="$PARAM"
+
+                shift 2
+            ;;
+
             -h|--help)
                 f_usage
             ;;
@@ -79,9 +89,8 @@ f_process_args() {
 f_usage() {
     echo "Usage:"
     echo "    $0                    verbose output"
-    echo "    $0 --q1               list vaults during progress"
-    echo "    $0 --q2               full quiet"
     echo "    $0 -f <freq>          hourly,[daily],weekly,monthly (comma separated list)"
+    echo "    $0 -j <num>           number of parallel jobs"
     echo
 
     exit 1
@@ -138,7 +147,7 @@ f_run_parallel_jobs() {
     f_date "BEGIN: "
 
     # shellcheck disable=SC1083
-    parallel -j 4 -a "$VAULTS_FILE" zrb.sh -e yes -f "$FREQ_LIST" -v {1}
+    parallel -j "$PARALLEL_JOBS" -a "$VAULTS_FILE" zrb.sh -e yes -f "$FREQ_LIST" -v {1}
 
     f_date "FINISH: "
 }
