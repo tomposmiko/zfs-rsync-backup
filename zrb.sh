@@ -603,3 +603,5 @@ for freq_type in $freq_list;do
   fi
 done
 ################# doing snapshot & expiring ##############
+
+echo
