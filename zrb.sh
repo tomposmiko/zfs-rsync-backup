@@ -474,6 +474,11 @@ f_lock_remove() {
 }
 
 f_check_remote_host() {
+    # return if the backup source is a local directory
+    if (echo "$backup_source" | grep -q -Eo ^"/[0-9a-z@\.-]+"); then
+        return 0
+    fi
+
   if echo "$backup_source" | grep -q -Eo ^"[0-9a-z@\.-]+";
   then
     export backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+")

@@ -2,139 +2,153 @@
 
 #set -x
 
-export PATH="$HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
 # default variables
-pool="tank"
-backup_dataset="$pool/zrb"
-PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-date=$(date "+%Y-%m-%d--%H-%M")
+export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export QUIET_NOTIFICATIONS=1
+export INTERACTIVE_SESSION=0
 
-global_config_dir="/etc/zrb"
-global_exclude="$global_config_dir/exclude"
-global_expire="$global_config_dir/expire"
+export BACKUP_DATASET="tank/zrb"
+export GLOBAL_CONFIG_DIR="/etc/zrb"
+export GLOBAL_EXCLUDE_RULE="$GLOBAL_CONFIG_DIR/exclude"
+export GLOBAL_EXPIRE_RULE="$GLOBAL_CONFIG_DIR/expire"
+export FREQ_LIST="daily"
+export LOCK_FILE="/var/run/${SCRIPT_BASENAME}.lock"
+export VAULTS_FILE="/tmp/vaults.txt"
 
-quiet=1
-interactive=0
+export SCRIPT_BASENAME="${0##*/}"
 
-if /usr/bin/tty > /dev/null;
+f_check_switch_param() {
+    if ( echo x"$1" | grep -q ^x$ ); then
+        f_say "$C_RED Missing argument!"
+
+        exit 1
+    fi
+}
+
+f_date() {
+    local text="$1"
+
+    echo -n "$text"
+
+    date +"%Y-%m-%d %H:%M %Z"
+}
+
+f_declare_f_say() {
+    if [[ $- == *i* ]]; then
+        export QUIET_NOTIFICATIONS=0
+        export INTERACTIVE_SESSION=1
+    fi
+
+    if [[ $INTERACTIVE_SESSION -eq 1 ]]
     then
-        quiet=0
-        interactive=1
-fi
+        f_say() { echo -ne "$1"; echo -e "$C_NOCOLOR"; }
 
-# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
-uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
-if [[ $interactive -eq 1 ]]
-   then say() { echo -ne $1;echo -e $nocolor; }
-        # Colors, yo!
-        green="\e[1;32m"
-        red="\e[1;31m"
-        blue="\e[1;34m"
-        purple="\e[1;35m"
-        cyan="\e[1;36m"
-        nocolor="\e[0m"
-   else
+        export C_GREEN="\e[1;32m"
+        export C_RED="\e[1;31m"
+        export C_BLUE="\e[1;34m"
+        export C_PURPLE="\e[1;35m"
+        export C_CYAN="\e[1;36m"
+        export C_NOCOLOR="\e[0m"
+    else
         # do nothing
-        say() { echo -ne $1; true; }
-fi
+        f_say() { echo -ne "$1"; true; }
+    fi
 
-
-f_check_switch_param(){
-	if echo x"$1" |grep -q ^x$;then
-		echo "Missing argument!"
-		exit 1
-	fi
+    export -f f_say
 }
 
-f_usage(){
-	echo "Usage:"
-	echo "  $0                    verbose output"
-	echo "  $0 -q                 display vaults"
-	echo "  $0 -qq                full quiet"
-    echo "  $0 -f <freq types>    hourly,[daily],weekly,monthly (comma separated list)"
-	echo
+f_process_args() {
+    while [ "$#" -gt "0" ]; do
+        case "$1" in
+            -f|--freq)
+                PARAM=$2
+                f_check_switch_param "$PARAM"
+
+                FREQ_LIST="$PARAM"
+
+                shift 2
+            ;;
+
+            -h|--help)
+                f_usage
+            ;;
+        esac
+    done
 }
 
-# Exit if no arguments!
-#let $# || { f_usage; exit 1; }
+f_usage() {
+    echo "Usage:"
+    echo "    $0                    verbose output"
+    echo "    $0 --q1               list vaults during progress"
+    echo "    $0 --q2               full quiet"
+    echo "    $0 -f <freq>          hourly,[daily],weekly,monthly (comma separated list)"
+    echo
 
-while [ "$#" -gt "0" ]; do
-  case "$1" in
-    -f|--freq)
-        PARAM=$2
-        f_check_switch_param $PARAM
-        freq_list=$PARAM
-        shift 2
-    ;;
+    exit 1
+}
 
-	-q)
-		quiet_little=1
-		break
-	;;
+f_list_vaults() {
+    if ( ! zfs list -H -s name -o name "$BACKUP_DATASET" ) ; then
+        f_say "$C_RED    Unable to access the ZFS dataset: '$BACKUP_DATASET'"
 
-	-qq)
-		quiet_full=1
-		break
-	;;
+        exit 1
+    fi
 
-    ""$)
-        quiet_none=1
-        break
-	;;
+    zfs list -H -s name -o name -r "$BACKUP_DATASET" | grep -v "${BACKUP_DATASET}$" | sed "s@^${BACKUP_DATASET}/@@"
+}
 
-	-h|--help)
-		f_usage
-		exit 0
-	;;
-  esac
-done
+f_lock_create() {
+    local pid_now=$$
 
-if tty > /dev/null;
-	then
-		interactive=1
-fi
-
-# set default frequency to daily
-if [ -z "$freq_list" ];
-    then
-        freq_list="daily"
-fi
-
-if [ -f $global_config_dir/backup_dataset ];
-    then
-        backup_dataset=`cat $global_config_dir/backup_dataset`
-fi
-
-f_lock_create(){
-    pid_now=$$
-	basename=`basename $0`
-    lockfile="/var/run/${basename}.lock"
-    if pid_locked=`cat $lockfile 2>/dev/null`;
+    if pid_locked=$(cat "$LOCK_FILE" 2>/dev/null);
         then
-            if ps --no-headers -o args -p $pid_locked |grep -q "${basename}";
+            if ( ps --no-headers -o args -p "$pid_locked" | grep -q "${SCRIPT_BASENAME}" );
                 then
-                    say "$red $0 is already running!"
+                    f_say "$C_RED $0 is already running!"
+
                     exit 1
                 else
-                    say "$purple Stale pidfile exists...removing."
+                    f_say "$C_PURPLE Stale pidfile exists...removing."
+
                     f_lock_remove
             fi
     fi
-    echo $pid_now > $lockfile
+
+    echo "$pid_now" > "$LOCK_FILE"
 }
 
-f_lock_remove(){
-    rm -f $lockfile
+f_lock_remove() {
+    rm -f "$LOCK_FILE"
 }
 
+f_read_global_config() {
+    if [ -f "$GLOBAL_CONFIG_DIR/BACKUP_DATASET" ];
+        then
+            BACKUP_DATASET=$(cat "$GLOBAL_CONFIG_DIR/BACKUP_DATASET")
+    fi
+}
+
+f_run_parallel_jobs() {
+    VAULTS_FILE=$1
+
+    f_date "BEGIN: "
+
+    # shellcheck disable=SC1083
+    parallel -j 4 -a "$VAULTS_FILE" zrb.sh -e yes -f "$FREQ_LIST" -v {1}
+
+    f_date "FINISH: "
+}
+
+f_declare_f_say
+
+f_process_args "$@"
+
+f_read_global_config
 
 f_lock_create
-vaults=`mktemp /tmp/vaults.XXXX`
 
-zfs list -H -s name -o name -r $backup_dataset | grep zrb$ | sed "s@^${backup_dataset}/@@" > $vaults
-echo "BEGIN: `date`"
-parallel -j 4 -a $vaults zrb.sh -e yes -f $freq_list -v {1}
-rm $vaults
-echo "END: `date`"
+f_list_vaults | tee "$VAULTS_FILE" > /dev/null
+
+f_run_parallel_jobs "$VAULTS_FILE"
+
 f_lock_remove
