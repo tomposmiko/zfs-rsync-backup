@@ -97,7 +97,7 @@ f_usage() {
 }
 
 f_list_vaults() {
-    if ( ! zfs list -H -s name -o name "$BACKUP_DATASET" ) ; then
+    if ( ! zfs list -H -s name -o name "$BACKUP_DATASET" > /dev/null ) ; then
         f_say "$C_RED    Unable to access the ZFS dataset: '$BACKUP_DATASET'"
 
         exit 1
@@ -105,7 +105,7 @@ f_list_vaults() {
 
     local dataset
 
-    for dataset in $( zfs list -r -H -s name -o name "$BACKUP_DATASET" | grep -v "$BACKUP_DATASET$" ); do
+    for dataset in $( zfs list -r -H -s name -o name "$BACKUP_DATASET" | grep -v "${BACKUP_DATASET}$" ); do
         zfs list -H -s name -o name -r "$dataset" | grep -q "${dataset}/" || echo "$dataset";
     done | sed "s@^${BACKUP_DATASET}/@@"
 }
