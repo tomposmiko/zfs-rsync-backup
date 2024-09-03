@@ -34,7 +34,7 @@ f_date() {
     date +"%Y-%m-%d %H:%M %Z"
 }
 
-f_declare_f_say() {
+_f_declare_f_say() {
     if [[ $- == *i* ]]; then
         export QUIET_NOTIFICATIONS=0
         export INTERACTIVE_SESSION=1
@@ -152,7 +152,7 @@ f_run_parallel_jobs() {
     f_date "FINISH: "
 }
 
-f_declare_f_say
+_f_declare_f_say
 
 f_process_args "$@"
 
