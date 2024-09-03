@@ -77,7 +77,7 @@ f_usage() {
 
 # Exit if no arguments!
 # shellcheck disable=SC2219
-let $# || { f_usage; exit 1; }
+let $# || f_usage
 
 while [ "$#" -gt "0" ]; do
   case "$1" in
@@ -145,7 +145,6 @@ while [ "$#" -gt "0" ]; do
 
     -h|--help|*)
       f_usage
-      exit 0
       ;;
   esac
 done
@@ -235,7 +234,7 @@ then
     fs_to_list=$(zfs list -o name -s name | grep "^$backup_dataset/.*$vault_to_list")
     if [ x"$fs_to_list" == x"$backup_dataset" ];
     then
-      echo "No matching filesystem!" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+      echo "No matching filesystem!" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
       say "$red No matching filesystem!"
     else
       zfs list -s name -t all -r "$fs_to_list"
@@ -249,35 +248,35 @@ fi
 ################## checks for entries in vault ######################
 # check for zfs dataset of vault
 if ! zfs list -s name "$backup_dataset/$vault" > /dev/null 2>&1; then
-  echo "Non-existent dataset for vault: $backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent dataset for vault: $backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent dataset for vault: $backup_dataset/$vault !"
   exit 1
 fi
 
 # check for directory of vault
 if [ ! -d "/$backup_dataset/$vault" ]; then
-  echo "Non-existent vault directory: /$backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent vault directory: /$backup_dataset/$vault !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent vault directory: /$backup_dataset/$vault !"
   exit 1
 fi
 
 # check for config directory of vault
 if [ ! -d "$backup_vault_conf" ]; then
-  echo "Non-existent config directory: $backup_vault_conf !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent config directory: $backup_vault_conf !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent config directory: $backup_vault_conf !"
   exit 1
 fi
 
 # check for data directory of vault
 if [ ! -d "$backup_vault_dest" ]; then
-  echo "Non-existent rsync destination directory: $backup_vault_dest !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent rsync destination directory: $backup_vault_dest !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent rsync destination directory: $backup_vault_dest !"
   exit 1
 fi
 
 # check for log directory of vault
 if [ ! -d "$backup_vault_log" ]; then
-  echo "Non-existent rsync destination directory: $backup_vault_log !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent rsync destination directory: $backup_vault_log !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent rsync destination directory: $backup_vault_log !"
   exit 1
 fi
@@ -301,7 +300,7 @@ if [ -f "$backup_vault_conf/source" ];
 then
   export backup_source=$(cat "$backup_vault_conf/source")
 else
-  echo "Non-existent source file: $backup_vault_conf/source !" | mail -s "zrb.sh ERROR: $vault" $email_notify_address
+  echo "Non-existent source file: $backup_vault_conf/source !" | mail -s "zrb.sh ERROR: $vault" "$email_notify_address"
   say "$red Non-existent source file: $backup_vault_conf/source !"
   exit 1
 fi
@@ -379,7 +378,8 @@ f_expire() {
     say "$red No default expire file: $global_expire !"
     exit 1
   fi
-  # shellcheck disable=SC1090
+
+  # shellcheck disable=SC1090,SC1091
   test -f "$backup_vault_conf/expire" && . "$backup_vault_conf/expire"
   expire_rule="expire_${freq_type}"
   expire_limit=$(date "+%s" -d "${!expire_rule} ago")
@@ -484,7 +484,7 @@ f_check_remote_host() {
     export backup_host=$(echo "$backup_source" | grep -Eo ^"[0-9a-z@\.-]+")
   fi
 
-  if [ -n $backup_host ];
+  if [ -n "$backup_host" ];
   then
     #echo "DEBUG: backup_host - f_check_remote_host: $backup_host"
     if ! ssh ${ssh_args[@]} "$backup_host" 'echo -n' 2>/dev/null
@@ -501,7 +501,7 @@ f_pre_run_script() {
   pre_run_script="/$backup_dataset/$vault/config/pre-run.sh"
   if [ -f "$pre_run_script" ];
   then
-    bash $pre_run_script
+    bash "$pre_run_script"
   fi
 }
 
@@ -510,7 +510,7 @@ f_post_run_script() {
   post_run_script="/$backup_dataset/$vault/config/post-run.sh"
   if [ -f "$post_run_script" ];
   then
-    bash $post_run_script
+    bash "$post_run_script"
   fi
 }
 
@@ -533,11 +533,14 @@ f_rsync() {
   else
     rsync --rsync-path 'sudo rsync' ${rsync_args[@]} "$backup_source/" "$backup_vault_dest/"
   fi
-  e=$?
-  if [ $e -eq 24 -o $e -eq 23 ]; then
+
+  exit_code=$?
+
+  if [ $exit_code -eq 24 ] || [ $exit_code -eq 23 ]; then
     return 0
   fi
-  return $e
+
+  return $exit_code
 }
 
 ################## doing rsync ####################
